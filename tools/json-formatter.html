@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .output-pre {
+      font-family: monospace;
+      font-size: 0.9rem;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      min-height: 150px;
+      color: var(--color-text);
+    }
+
+    .error-msg {
+      color: #f85149;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .indent-input {
+      width: 60px;
+      padding: 0.5rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      background: var(--color-bg);
+      color: var(--color-text);
+      text-align: center;
+    }
+
+    .json-key { color: #ffb074; }
+    .json-string { color: #a5d6ff; }
+    .json-number { color: #79c0ff; }
+    .json-bool { color: #f85149; }
+    .json-null { color: #8b949e; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>JSON Formatter</h1>
+    <div class="tool-container">
+      <label for="input">Input</label>
+      <textarea id="input" placeholder='{"name":"John","age":30,"tags":["dev","js"]}'></textarea>
+
+      <div class="btn-row" style="align-items: center;">
+        <button onclick="format('pretty')">Pretty Print</button>
+        <button onclick="format('compact')">Compact</button>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          Indent:
+          <input type="number" class="indent-input" id="indent" value="2" min="1" max="8">
+        </label>
+        <button onclick="copyOutput()">Copy</button>
+        <span id="copied-msg" style="color: var(--color-accent); font-size: 0.85rem; opacity: 0; transition: opacity 0.2s;">Copied!</span>
+      </div>
+
+      <div id="error"></div>
+
+      <div class="output-area">
+        <label>Output</label>
+        <pre class="output-pre" id="output"></pre>
+      </div>
+    </div>
+  </main>
+  <footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function format(mode) {
+      const input = document.getElementById('input').value.trim();
+      const errorEl = document.getElementById('error');
+      const outputEl = document.getElementById('output');
+      errorEl.innerHTML = '';
+
+      if (!input) {
+        outputEl.innerHTML = '';
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(input);
+      } catch (e) {
+        errorEl.innerHTML = '<p class="error-msg">Invalid JSON: ' + escapeHtml(e.message) + '</p>';
+        outputEl.innerHTML = '';
+        return;
+      }
+
+      if (mode === 'compact') {
+        outputEl.textContent = JSON.stringify(parsed);
+      } else {
+        const indent = Math.min(Math.max(parseInt(document.getElementById('indent').value) || 2, 1), 8);
+        outputEl.innerHTML = highlightJson(JSON.stringify(parsed, null, indent));
+      }
+    }
+
+    function highlightJson(json) {
+      return json
+        .replace(/("(?:\\.|[^"\\])*")\s*:/g, '<span class="json-key">$1</span>:')
+        .replace(/:\s*("(?:\\.|[^"\\])*")/g, function(match, str) {
+          return match.replace(str, '<span class="json-string">' + str + '</span>');
+        })
+        .replace(/(?<=[:,\[\s])(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, '<span class="json-number">$1</span>')
+        .replace(/(?<=[:,\[\s])(true|false)/g, '<span class="json-bool">$1</span>')
+        .replace(/(?<=[:,\[\s])(null)/g, '<span class="json-null">$1</span>');
+    }
+
+    function copyOutput() {
+      const text = document.getElementById('output').textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const msg = document.getElementById('copied-msg');
+      msg.style.opacity = '1';
+      setTimeout(() => msg.style.opacity = '0', 1500);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
