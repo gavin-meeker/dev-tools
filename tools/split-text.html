@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Split Text - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>Split Text</h1>
+    <div class="tool-container">
+      <label for="input">Input</label>
+      <textarea id="input" placeholder="Text to split..."></textarea>
+
+      <label for="delimiter">Delimiter</label>
+      <div class="btn-row" style="align-items: center; margin-bottom: 1rem;">
+        <input type="text" id="delimiter" value=", " style="width: 120px; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: monospace; font-size: 0.95rem;">
+        <button onclick="setDelim(', ')">comma</button>
+        <button onclick="setDelim('; ')">semicolon</button>
+        <button onclick="setDelim(' ')">space</button>
+        <button onclick="setDelim('\t')">tab</button>
+        <button onclick="setDelim('|')">pipe</button>
+      </div>
+
+      <div class="btn-row">
+        <button onclick="splitText()">Split</button>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="trim-parts" checked> Trim each part
+        </label>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="skip-empty" checked> Skip empty parts
+        </label>
+      </div>
+
+      <div class="output-area">
+        <label>Output (one item per line)</label>
+        <pre id="output"></pre>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function setDelim(value) {
+      document.getElementById('delimiter').value = value;
+    }
+
+    function splitText() {
+      const input = document.getElementById('input').value;
+      const delimiter = document.getElementById('delimiter').value;
+      const trimParts = document.getElementById('trim-parts').checked;
+      const skipEmpty = document.getElementById('skip-empty').checked;
+
+      let parts = input.split(delimiter);
+      if (trimParts) parts = parts.map(p => p.trim());
+      if (skipEmpty) parts = parts.filter(p => p !== '');
+
+      document.getElementById('output').textContent = parts.join('\n');
+    }
+  </script>
+</body>
+</html>

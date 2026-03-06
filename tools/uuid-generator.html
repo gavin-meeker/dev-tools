@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UUID Generator - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .uuid-display {
+      font-family: monospace;
+      font-size: 1.3rem;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      user-select: all;
+      cursor: pointer;
+      word-break: break-all;
+    }
+
+    .uuid-display:hover {
+      border-color: var(--color-accent);
+    }
+
+    .copied-msg {
+      color: var(--color-accent);
+      font-size: 0.85rem;
+      margin-left: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .copied-msg.show {
+      opacity: 1;
+    }
+
+    .batch-output {
+      font-family: monospace;
+      font-size: 0.95rem;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 60px;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    .batch-output:hover {
+      border-color: var(--color-accent);
+    }
+
+    .count-input {
+      width: 70px;
+      padding: 0.5rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      background: var(--color-bg);
+      color: var(--color-text);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>UUID Generator</h1>
+    <div class="tool-container">
+      <label>UUID v4</label>
+      <div class="uuid-display" id="single-uuid" onclick="copyText(this)" title="Click to copy"></div>
+
+      <div class="btn-row" style="align-items: center;">
+        <button onclick="generateOne()">Generate</button>
+        <button onclick="copyText(document.getElementById('single-uuid'))">Copy</button>
+        <span class="copied-msg" id="copied-single">Copied!</span>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0;">
+
+      <label>Batch Generate</label>
+      <div class="btn-row" style="align-items: center;">
+        <input type="number" class="count-input" id="batch-count" value="10" min="1" max="1000">
+        <button onclick="generateBatch()">Generate</button>
+        <button onclick="copyText(document.getElementById('batch-output'))">Copy All</button>
+        <span class="copied-msg" id="copied-batch">Copied!</span>
+      </div>
+      <div class="batch-output" id="batch-output" onclick="copyText(this)" title="Click to copy"></div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function uuidv4() {
+      return crypto.randomUUID();
+    }
+
+    function generateOne() {
+      document.getElementById('single-uuid').textContent = uuidv4();
+    }
+
+    function generateBatch() {
+      const count = Math.min(Math.max(parseInt(document.getElementById('batch-count').value) || 1, 1), 1000);
+      const uuids = [];
+      for (let i = 0; i < count; i++) uuids.push(uuidv4());
+      document.getElementById('batch-output').textContent = uuids.join('\n');
+    }
+
+    function copyText(el) {
+      const text = el.textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const msgId = el.id === 'single-uuid' ? 'copied-single' : 'copied-batch';
+      const msg = document.getElementById(msgId);
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 1500);
+    }
+
+    generateOne();
+  </script>
+</body>
+</html>

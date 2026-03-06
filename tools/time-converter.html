@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Converter - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .tz-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .tz-grid { grid-template-columns: 1fr; }
+    }
+
+    .tz-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      background: var(--color-bg);
+    }
+
+    .tz-card h3 {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+    }
+
+    .tz-card .time-display {
+      font-family: monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .tz-card .date-display {
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+
+    .input-row > div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-row input,
+    .input-row select {
+      padding: 0.5rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .unix-section {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .unix-display {
+      font-family: monospace;
+      font-size: 1.1rem;
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      display: inline-block;
+      margin-top: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>Time Converter</h1>
+    <div class="tool-container">
+      <div class="input-row">
+        <div>
+          <label for="date-input">Date</label>
+          <input type="date" id="date-input">
+        </div>
+        <div>
+          <label for="time-input">Time (24h)</label>
+          <input type="text" id="time-input" placeholder="16:30:00" style="font-family: monospace; width: 110px;">
+        </div>
+        <div>
+          <label for="tz-input">Timezone</label>
+          <select id="tz-input">
+            <option value="UTC">UTC</option>
+            <option value="America/New_York" selected>US Eastern</option>
+            <option value="America/Chicago">US Central</option>
+            <option value="America/Denver">US Mountain</option>
+            <option value="America/Los_Angeles">US Pacific</option>
+            <option value="Europe/London">London</option>
+            <option value="Europe/Paris">Paris / Berlin</option>
+            <option value="Asia/Tokyo">Tokyo</option>
+            <option value="Asia/Shanghai">Shanghai</option>
+            <option value="Asia/Kolkata">India (IST)</option>
+            <option value="Australia/Sydney">Sydney</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button onclick="setNow()">Now</button>
+        </div>
+      </div>
+
+      <div class="tz-grid" id="tz-grid"></div>
+
+      <div class="unix-section">
+        <label>Unix Timestamp</label>
+        <div>
+          <span class="unix-display" id="unix-seconds"></span>
+          <span style="color: var(--color-text-light); font-size: 0.85rem; margin-left: 0.5rem;">seconds</span>
+        </div>
+        <div style="margin-top: 0.5rem;">
+          <span class="unix-display" id="unix-ms"></span>
+          <span style="color: var(--color-text-light); font-size: 0.85rem; margin-left: 0.5rem;">milliseconds</span>
+        </div>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    const zones = [
+      { label: 'UTC', tz: 'UTC' },
+      { label: 'US Eastern (ET)', tz: 'America/New_York' },
+      { label: 'US Central (CT)', tz: 'America/Chicago' },
+      { label: 'US Mountain (MT)', tz: 'America/Denver' },
+      { label: 'US Pacific (PT)', tz: 'America/Los_Angeles' },
+      { label: 'London (GMT/BST)', tz: 'Europe/London' },
+      { label: 'Paris / Berlin (CET)', tz: 'Europe/Paris' },
+      { label: 'Tokyo (JST)', tz: 'Asia/Tokyo' },
+      { label: 'Shanghai (CST)', tz: 'Asia/Shanghai' },
+      { label: 'India (IST)', tz: 'Asia/Kolkata' },
+      { label: 'Sydney (AEST)', tz: 'Australia/Sydney' },
+    ];
+
+    const dateInput = document.getElementById('date-input');
+    const timeInput = document.getElementById('time-input');
+    const tzInput = document.getElementById('tz-input');
+
+    dateInput.addEventListener('input', convert);
+    timeInput.addEventListener('input', convert);
+    tzInput.addEventListener('change', convert);
+
+    function setNow() {
+      const now = new Date();
+      const tz = tzInput.value;
+      const local = toLocalString(now, tz);
+      const [datePart, timePart] = local.split('T');
+      dateInput.value = datePart;
+      timeInput.value = timePart;
+      convert();
+    }
+
+    function toLocalString(date, tz) {
+      const parts = {};
+      new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+      }).formatToParts(date).forEach(p => { parts[p.type] = p.value; });
+      return parts.year + '-' + parts.month + '-' + parts.day
+        + 'T' + parts.hour + ':' + parts.minute + ':' + parts.second;
+    }
+
+    function parseInputAsDate() {
+      const dateVal = dateInput.value;
+      const timeVal = timeInput.value;
+      if (!dateVal || !timeVal) return null;
+
+      // Validate time format (HH:MM or HH:MM:SS)
+      const timeMatch = timeVal.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (!timeMatch) return null;
+      const h = timeMatch[1].padStart(2, '0');
+      const m = timeMatch[2];
+      const s = timeMatch[3] || '00';
+      const val = dateVal + 'T' + h + ':' + m + ':' + s;
+
+      const tz = tzInput.value;
+      const naive = new Date(val + 'Z');
+      if (isNaN(naive.getTime())) return null;
+      const offset = getOffsetMs(naive, tz);
+      const adjusted = new Date(naive.getTime() - offset);
+      // Refine in case DST boundary shifted the offset
+      const offset2 = getOffsetMs(adjusted, tz);
+      return new Date(naive.getTime() - offset2);
+    }
+
+    function getOffsetMs(date, tz) {
+      const utcStr = toLocalString(date, 'UTC');
+      const tzStr = toLocalString(date, tz);
+      const utcDate = new Date(utcStr + 'Z');
+      const tzDate = new Date(tzStr + 'Z');
+      return tzDate.getTime() - utcDate.getTime();
+    }
+
+    function convert() {
+      const date = parseInputAsDate();
+      const grid = document.getElementById('tz-grid');
+      const unixS = document.getElementById('unix-seconds');
+      const unixMs = document.getElementById('unix-ms');
+
+      if (!date || isNaN(date.getTime())) {
+        grid.innerHTML = '';
+        unixS.textContent = '-';
+        unixMs.textContent = '-';
+        return;
+      }
+
+      unixS.textContent = Math.floor(date.getTime() / 1000);
+      unixMs.textContent = date.getTime();
+
+      grid.innerHTML = zones.map(z => {
+        const timeFmt = new Intl.DateTimeFormat('en-GB', {
+          timeZone: z.tz,
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false,
+        }).format(date);
+
+        const dateFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: z.tz,
+          weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+        }).format(date);
+
+        const abbr = new Intl.DateTimeFormat('en-US', {
+          timeZone: z.tz,
+          timeZoneName: 'short',
+        }).formatToParts(date).find(p => p.type === 'timeZoneName')?.value || '';
+
+        return '<div class="tz-card">'
+          + '<h3>' + z.label + ' (' + abbr + ')</h3>'
+          + '<div class="time-display">' + timeFmt + '</div>'
+          + '<div class="date-display">' + dateFmt + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    // Initialize with current time
+    setNow();
+  </script>
+</body>
+</html>

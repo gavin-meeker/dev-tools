@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find &amp; Replace - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>Find &amp; Replace</h1>
+    <div class="tool-container">
+      <label for="input">Input</label>
+      <textarea id="input" placeholder="Paste your text here..."></textarea>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: end;">
+        <div style="flex: 1; min-width: 150px;">
+          <label for="find">Find</label>
+          <input type="text" id="find" style="width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 0.95rem; background: var(--color-bg); color: var(--color-text);">
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+          <label for="replace">Replace with</label>
+          <input type="text" id="replace" style="width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 0.95rem; background: var(--color-bg); color: var(--color-text);">
+        </div>
+      </div>
+
+      <div class="btn-row" style="align-items: center;">
+        <button onclick="doReplace()">Replace All</button>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="use-regex"> Use regex
+        </label>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="case-sensitive" checked> Case sensitive
+        </label>
+      </div>
+
+      <div class="output-area">
+        <label>Output</label>
+        <pre id="output"></pre>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function doReplace() {
+      const input = document.getElementById('input').value;
+      const find = document.getElementById('find').value;
+      const replaceWith = document.getElementById('replace').value;
+      const useRegex = document.getElementById('use-regex').checked;
+      const caseSensitive = document.getElementById('case-sensitive').checked;
+
+      if (!find) return;
+
+      let pattern;
+      const flags = 'g' + (caseSensitive ? '' : 'i');
+
+      if (useRegex) {
+        try {
+          pattern = new RegExp(find, flags);
+        } catch (e) {
+          document.getElementById('output').textContent = 'Invalid regex: ' + e.message;
+          return;
+        }
+      } else {
+        const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        pattern = new RegExp(escaped, flags);
+      }
+
+      document.getElementById('output').textContent = input.replace(pattern, replaceWith);
+    }
+  </script>
+</body>
+</html>

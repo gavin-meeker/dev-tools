@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Counter - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>Word Counter</h1>
+    <div class="tool-container">
+      <label for="input">Input</label>
+      <textarea id="input" placeholder="Paste your text here..." oninput="count()"></textarea>
+
+      <div class="output-area" id="stats">
+        <p><strong>Characters:</strong> <span id="chars">0</span></p>
+        <p><strong>Characters (no spaces):</strong> <span id="chars-no-space">0</span></p>
+        <p><strong>Words:</strong> <span id="words">0</span></p>
+        <p><strong>Sentences:</strong> <span id="sentences">0</span></p>
+        <p><strong>Paragraphs:</strong> <span id="paragraphs">0</span></p>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function count() {
+      const text = document.getElementById('input').value;
+
+      document.getElementById('chars').textContent = text.length;
+      document.getElementById('chars-no-space').textContent = text.replace(/\s/g, '').length;
+      document.getElementById('words').textContent = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+      document.getElementById('sentences').textContent = text.trim() === '' ? 0 : text.split(/[.!?]+/).filter(s => s.trim()).length;
+      document.getElementById('paragraphs').textContent = text.trim() === '' ? 0 : text.split(/\n\s*\n/).filter(p => p.trim()).length;
+    }
+  </script>
+</body>
+</html>

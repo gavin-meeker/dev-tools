@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT Decoder - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .jwt-parts {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 700px) {
+      .jwt-parts { grid-template-columns: 1fr; }
+    }
+
+    .jwt-part {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .jwt-part-header {
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .jwt-part pre {
+      padding: 0.75rem;
+      margin: 0;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: var(--color-bg);
+      min-height: 80px;
+      flex: 1;
+    }
+
+    .part-header { background: #1e3a5f; color: #79b8ff; }
+    .part-payload { background: #2d1b69; color: #b392f0; }
+    .part-signature { background: #5c1a3e; color: #f097b2; }
+
+    .jwt-input {
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    .error-msg {
+      color: #f85149;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .exp-info {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+    }
+
+    .exp-valid { background: #0f2d1a; color: #3fb950; }
+    .exp-expired { background: #3d1214; color: #f85149; }
+
+    .json-key { color: #ffb074; }
+    .json-string { color: #a5d6ff; }
+    .json-number { color: #79c0ff; }
+    .json-bool { color: #f85149; }
+    .json-null { color: #8b949e; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>JWT Decoder</h1>
+    <div class="tool-container">
+      <label for="input">Paste JWT</label>
+      <textarea id="input" class="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIs..." oninput="decode()"></textarea>
+
+      <div id="error"></div>
+      <div id="expiry"></div>
+      <div class="jwt-parts" id="parts" style="display:none;">
+        <div class="jwt-part">
+          <div class="jwt-part-header part-header">Header</div>
+          <pre id="jwt-header"></pre>
+        </div>
+        <div class="jwt-part">
+          <div class="jwt-part-header part-payload">Payload</div>
+          <pre id="jwt-payload"></pre>
+        </div>
+        <div class="jwt-part">
+          <div class="jwt-part-header part-signature">Signature</div>
+          <pre id="jwt-signature"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function decode() {
+      const input = document.getElementById('input').value.trim();
+      const errorEl = document.getElementById('error');
+      const partsEl = document.getElementById('parts');
+      const expiryEl = document.getElementById('expiry');
+
+      errorEl.innerHTML = '';
+      expiryEl.innerHTML = '';
+
+      if (!input) {
+        partsEl.style.display = 'none';
+        return;
+      }
+
+      const segments = input.split('.');
+      if (segments.length !== 3) {
+        partsEl.style.display = 'none';
+        errorEl.innerHTML = '<p class="error-msg">Invalid JWT: expected 3 dot-separated parts, got ' + segments.length + '.</p>';
+        return;
+      }
+
+      let header, payload;
+      try {
+        header = JSON.parse(b64Decode(segments[0]));
+      } catch (e) {
+        partsEl.style.display = 'none';
+        errorEl.innerHTML = '<p class="error-msg">Failed to decode header: ' + escapeHtml(e.message) + '</p>';
+        return;
+      }
+
+      try {
+        payload = JSON.parse(b64Decode(segments[1]));
+      } catch (e) {
+        partsEl.style.display = 'none';
+        errorEl.innerHTML = '<p class="error-msg">Failed to decode payload: ' + escapeHtml(e.message) + '</p>';
+        return;
+      }
+
+      document.getElementById('jwt-header').innerHTML = highlightJson(header);
+      document.getElementById('jwt-payload').innerHTML = highlightJson(payload);
+      document.getElementById('jwt-signature').textContent = segments[2];
+      partsEl.style.display = '';
+
+      // Show expiry info
+      if (payload.exp) {
+        const expDate = new Date(payload.exp * 1000);
+        const now = new Date();
+        const expired = expDate < now;
+        const cls = expired ? 'exp-expired' : 'exp-valid';
+        const label = expired ? 'Expired' : 'Valid';
+        expiryEl.innerHTML = '<div class="exp-info ' + cls + '">'
+          + '<strong>' + label + '</strong> — expires ' + escapeHtml(expDate.toLocaleString())
+          + (payload.iat ? ' (issued ' + escapeHtml(new Date(payload.iat * 1000).toLocaleString()) + ')' : '')
+          + '</div>';
+      }
+    }
+
+    function b64Decode(str) {
+      // Handle base64url encoding
+      let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      return decodeURIComponent(atob(b64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+    }
+
+    function highlightJson(obj) {
+      const json = JSON.stringify(obj, null, 2);
+      return json.replace(/("(?:\\.|[^"\\])*")\s*:/g, '<span class="json-key">$1</span>:')
+        .replace(/:\s*("(?:\\.|[^"\\])*")/g, function(match, str) {
+          return match.replace(str, '<span class="json-string">' + str + '</span>');
+        })
+        .replace(/:\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, function(match, num) {
+          return match.replace(num, '<span class="json-number">' + num + '</span>');
+        })
+        .replace(/:\s*(true|false)/g, function(match, bool) {
+          return match.replace(bool, '<span class="json-bool">' + bool + '</span>');
+        })
+        .replace(/:\s*(null)/g, function(match, n) {
+          return match.replace(n, '<span class="json-null">' + n + '</span>');
+        });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

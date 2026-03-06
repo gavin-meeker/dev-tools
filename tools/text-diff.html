@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Diff - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    main {
+      max-width: 75%;
+    }
+
+    .dual-input {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .dual-input { grid-template-columns: 1fr; }
+    }
+
+    .match-msg {
+      color: #3fb950;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .diff-view {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: auto;
+      margin-top: 0.5rem;
+    }
+
+    .diff-side {
+      overflow: auto;
+    }
+
+    .diff-side:first-child {
+      border-right: 2px solid var(--color-border);
+    }
+
+    .diff-side-header {
+      font-family: monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 10px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text-light);
+    }
+
+    .diff-line {
+      display: flex;
+      white-space: pre;
+      line-height: 1.5;
+      font-family: monospace;
+      font-size: 0.85rem;
+      min-height: 1.5em;
+    }
+
+    .diff-line-num {
+      width: 36px;
+      min-width: 36px;
+      text-align: right;
+      padding: 0 6px 0 4px;
+      color: #888;
+      user-select: none;
+      border-right: 1px solid var(--color-border);
+    }
+
+    .diff-line-content {
+      padding: 0 8px;
+      flex: 1;
+    }
+
+    .diff-line.added {
+      background: #0f2d1a;
+    }
+    .diff-line.added .diff-line-num {
+      background: #133a1f;
+      color: #3fb950;
+    }
+    .diff-line.added .diff-line-content {
+      color: #3fb950;
+    }
+
+    .diff-line.removed {
+      background: #3d1214;
+    }
+    .diff-line.removed .diff-line-num {
+      background: #4d1519;
+      color: #f85149;
+    }
+    .diff-line.removed .diff-line-content {
+      color: #f85149;
+    }
+
+    .diff-line.empty {
+      background: #1a1e24;
+    }
+    .diff-line.empty .diff-line-num {
+      background: #1a1e24;
+    }
+
+    .diff-line.unchanged {
+      background: var(--color-surface);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <nav><a href="../index.html">All Tools</a></nav>
+  </header>
+
+  <main>
+    <h1>Text Diff</h1>
+    <div class="tool-container">
+      <div class="dual-input">
+        <div>
+          <label for="input-left">Original</label>
+          <textarea id="input-left" placeholder="Paste original text..."></textarea>
+        </div>
+        <div>
+          <label for="input-right">Modified</label>
+          <textarea id="input-right" placeholder="Paste modified text..."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row" style="align-items: center;">
+        <button onclick="compare()">Compare</button>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="ignore-whitespace"> Ignore leading/trailing whitespace
+        </label>
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
+          <input type="checkbox" id="ignore-case"> Ignore case
+        </label>
+      </div>
+
+      <div class="output-area" id="output"></div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    function compare() {
+      const output = document.getElementById('output');
+      const ignoreWS = document.getElementById('ignore-whitespace').checked;
+      const ignoreCase = document.getElementById('ignore-case').checked;
+
+      const leftRaw = document.getElementById('input-left').value.split('\n');
+      const rightRaw = document.getElementById('input-right').value.split('\n');
+
+      // Prepare comparison versions (may differ from display versions)
+      const leftCmp = leftRaw.map(l => {
+        let s = l;
+        if (ignoreWS) s = s.trim();
+        if (ignoreCase) s = s.toLowerCase();
+        return s;
+      });
+      const rightCmp = rightRaw.map(l => {
+        let s = l;
+        if (ignoreWS) s = s.trim();
+        if (ignoreCase) s = s.toLowerCase();
+        return s;
+      });
+
+      const diff = myersDiff(leftCmp, rightCmp);
+
+      if (diff.every(d => d.type === 'unchanged')) {
+        output.innerHTML = '<p class="match-msg">The two texts are identical.</p>';
+        return;
+      }
+
+      // Map diff back to original lines for display
+      let li = 0, ri = 0;
+      const displayDiff = diff.map(d => {
+        if (d.type === 'removed') {
+          return { type: 'removed', value: leftRaw[li++] };
+        } else if (d.type === 'added') {
+          return { type: 'added', value: rightRaw[ri++] };
+        } else {
+          li++; ri++;
+          return { type: 'unchanged', value: leftRaw[li - 1] };
+        }
+      });
+
+      // Build paired rows for side-by-side
+      const rows = [];
+      let i = 0;
+      while (i < displayDiff.length) {
+        const d = displayDiff[i];
+        if (d.type === 'unchanged') {
+          rows.push({
+            left: { type: 'unchanged', value: d.value },
+            right: { type: 'unchanged', value: d.value },
+          });
+          i++;
+        } else if (d.type === 'removed') {
+          const removed = [];
+          while (i < displayDiff.length && displayDiff[i].type === 'removed') {
+            removed.push(displayDiff[i].value);
+            i++;
+          }
+          const added = [];
+          while (i < displayDiff.length && displayDiff[i].type === 'added') {
+            added.push(displayDiff[i].value);
+            i++;
+          }
+          const maxLen = Math.max(removed.length, added.length);
+          for (let j = 0; j < maxLen; j++) {
+            rows.push({
+              left: j < removed.length ? { type: 'removed', value: removed[j] } : { type: 'empty', value: '' },
+              right: j < added.length ? { type: 'added', value: added[j] } : { type: 'empty', value: '' },
+            });
+          }
+        } else if (d.type === 'added') {
+          rows.push({
+            left: { type: 'empty', value: '' },
+            right: { type: 'added', value: d.value },
+          });
+          i++;
+        }
+      }
+
+      // Render
+      let leftNum = 0, rightNum = 0;
+      let leftHtml = '', rightHtml = '';
+      for (const row of rows) {
+        if (row.left.type === 'unchanged' || row.left.type === 'removed') leftNum++;
+        const lNum = row.left.type === 'empty' ? '' : leftNum;
+        leftHtml += renderLine(row.left.type, lNum, row.left.value);
+
+        if (row.right.type === 'unchanged' || row.right.type === 'added') rightNum++;
+        const rNum = row.right.type === 'empty' ? '' : rightNum;
+        rightHtml += renderLine(row.right.type, rNum, row.right.value);
+      }
+
+      const addedCount = displayDiff.filter(d => d.type === 'added').length;
+      const removedCount = displayDiff.filter(d => d.type === 'removed').length;
+      const summary = '<p style="margin-bottom:0.5rem"><strong>'
+        + '<span style="color:#3fb950">+' + addedCount + '</span> '
+        + '<span style="color:#f85149">-' + removedCount + '</span>'
+        + '</strong></p>';
+
+      output.innerHTML = summary
+        + '<div class="diff-view">'
+        + '<div class="diff-side"><div class="diff-side-header">Original</div>' + leftHtml + '</div>'
+        + '<div class="diff-side"><div class="diff-side-header">Modified</div>' + rightHtml + '</div>'
+        + '</div>';
+
+      // Sync scrolling
+      const sides = output.querySelectorAll('.diff-side');
+      let syncing = false;
+      sides.forEach((side, idx) => {
+        side.addEventListener('scroll', () => {
+          if (syncing) return;
+          syncing = true;
+          const other = sides[idx === 0 ? 1 : 0];
+          other.scrollTop = side.scrollTop;
+          other.scrollLeft = side.scrollLeft;
+          syncing = false;
+        });
+      });
+    }
+
+    function renderLine(type, num, value) {
+      return '<div class="diff-line ' + type + '">'
+        + '<span class="diff-line-num">' + num + '</span>'
+        + '<span class="diff-line-content">' + escapeHtml(value) + '</span>'
+        + '</div>';
+    }
+
+    function myersDiff(left, right) {
+      const N = left.length;
+      const M = right.length;
+      const MAX = N + M;
+      const v = new Array(2 * MAX + 1);
+      v[MAX + 1] = 0;
+      const trace = [];
+
+      for (let d = 0; d <= MAX; d++) {
+        const newV = v.slice();
+        for (let k = -d; k <= d; k += 2) {
+          let x;
+          if (k === -d || (k !== d && v[MAX + k - 1] < v[MAX + k + 1])) {
+            x = v[MAX + k + 1];
+          } else {
+            x = v[MAX + k - 1] + 1;
+          }
+          let y = x - k;
+          while (x < N && y < M && left[x] === right[y]) {
+            x++;
+            y++;
+          }
+          newV[MAX + k] = x;
+          if (x >= N && y >= M) {
+            trace.push(newV);
+            return backtrack(trace, MAX, left, right);
+          }
+        }
+        trace.push(newV.slice());
+        for (let k = -d; k <= d; k += 2) {
+          v[MAX + k] = newV[MAX + k];
+        }
+      }
+      return [];
+    }
+
+    function backtrack(trace, MAX, left, right) {
+      let x = left.length;
+      let y = right.length;
+      const result = [];
+
+      for (let d = trace.length - 1; d >= 0; d--) {
+        const v = trace[d];
+        const k = x - y;
+        let prevK;
+        if (k === -d || (k !== d && (d === 0 ? -1 : trace[d-1][MAX + k - 1]) < (d === 0 ? -1 : trace[d-1][MAX + k + 1]))) {
+          prevK = k + 1;
+        } else {
+          prevK = k - 1;
+        }
+
+        const prevX = d === 0 ? 0 : trace[d - 1][MAX + prevK];
+        const prevY = prevX - prevK;
+
+        while (x > prevX && y > prevY) {
+          x--;
+          y--;
+          result.push({ type: 'unchanged', value: left[x] });
+        }
+
+        if (d > 0) {
+          if (x === prevX) {
+            result.push({ type: 'added', value: right[y - 1] });
+            y--;
+          } else {
+            result.push({ type: 'removed', value: left[x - 1] });
+            x--;
+          }
+        }
+      }
+
+      return result.reverse();
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
