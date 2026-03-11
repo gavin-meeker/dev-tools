@@ -62,15 +62,16 @@
           Indent:
           <input type="number" class="indent-input" id="indent" value="2" min="1" max="8">
         </label>
-        <button onclick="copyOutput()">Copy</button>
-        <span id="copied-msg" style="color: var(--color-accent); font-size: 0.85rem; opacity: 0; transition: opacity 0.2s;">Copied!</span>
       </div>
 
       <div id="error"></div>
 
       <div class="output-area">
         <label>Output</label>
-        <pre class="output-pre" id="output"></pre>
+        <div class="output-wrap">
+          <pre class="output-pre" id="output"></pre>
+          <button class="copy-icon" onclick="copyOutput(this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>
       </div>
     </div>
   </main>
@@ -116,13 +117,12 @@
         .replace(/(?<=[:,\[\s])(null)/g, '<span class="json-null">$1</span>');
     }
 
-    function copyOutput() {
+    function copyOutput(btn) {
       const text = document.getElementById('output').textContent;
       if (!text) return;
       navigator.clipboard.writeText(text);
-      const msg = document.getElementById('copied-msg');
-      msg.style.opacity = '1';
-      setTimeout(() => msg.style.opacity = '0', 1500);
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1500);
     }
 
     function escapeHtml(str) {

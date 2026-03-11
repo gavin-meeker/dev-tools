@@ -23,18 +23,6 @@
       border-color: var(--color-accent);
     }
 
-    .copied-msg {
-      color: var(--color-accent);
-      font-size: 0.85rem;
-      margin-left: 0.5rem;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .copied-msg.show {
-      opacity: 1;
-    }
-
     .batch-output {
       font-family: monospace;
       font-size: 0.95rem;
@@ -75,12 +63,13 @@
     <h1>UUID Generator</h1>
     <div class="tool-container">
       <label>UUID v4</label>
-      <div class="uuid-display" id="single-uuid" onclick="copyText(this)" title="Click to copy"></div>
+      <div class="output-wrap">
+        <div class="uuid-display" id="single-uuid"></div>
+        <button class="copy-icon" onclick="copyFrom('single-uuid', this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
 
-      <div class="btn-row" style="align-items: center;">
+      <div class="btn-row">
         <button onclick="generateOne()">Generate</button>
-        <button onclick="copyText(document.getElementById('single-uuid'))">Copy</button>
-        <span class="copied-msg" id="copied-single">Copied!</span>
       </div>
 
       <hr style="border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0;">
@@ -89,10 +78,11 @@
       <div class="btn-row" style="align-items: center;">
         <input type="number" class="count-input" id="batch-count" value="10" min="1" max="1000">
         <button onclick="generateBatch()">Generate</button>
-        <button onclick="copyText(document.getElementById('batch-output'))">Copy All</button>
-        <span class="copied-msg" id="copied-batch">Copied!</span>
       </div>
-      <div class="batch-output" id="batch-output" onclick="copyText(this)" title="Click to copy"></div>
+      <div class="output-wrap">
+        <div class="batch-output" id="batch-output"></div>
+        <button class="copy-icon" onclick="copyFrom('batch-output', this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
     </div>
   </main>
 <footer>Made by Gavin Meeker</footer>
@@ -113,14 +103,12 @@
       document.getElementById('batch-output').textContent = uuids.join('\n');
     }
 
-    function copyText(el) {
-      const text = el.textContent;
+    function copyFrom(id, btn) {
+      const text = document.getElementById(id).textContent;
       if (!text) return;
       navigator.clipboard.writeText(text);
-      const msgId = el.id === 'single-uuid' ? 'copied-single' : 'copied-batch';
-      const msg = document.getElementById(msgId);
-      msg.classList.add('show');
-      setTimeout(() => msg.classList.remove('show'), 1500);
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1500);
     }
 
     generateOne();
