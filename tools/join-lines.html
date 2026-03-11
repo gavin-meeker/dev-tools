@@ -28,6 +28,11 @@
         <button onclick="setDelim('|')">pipe</button>
       </div>
 
+      <label for="wrap-char">Wrap each line in</label>
+      <div style="margin-bottom: 1rem;">
+        <input type="text" id="wrap-char" value="" placeholder='e.g. " or ( or [' style="width: 180px; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: monospace; font-size: 0.95rem;">
+      </div>
+
       <div class="btn-row">
         <button onclick="joinLines()">Join</button>
         <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
@@ -47,19 +52,28 @@
 <footer>Made by Gavin Meeker</footer>
 
   <script>
+    const closingPairs = { '(': ')', '[': ']', '{': '}', '<': '>' };
+
     function setDelim(value) {
       document.getElementById('delimiter').value = value;
     }
 
-    function joinLines() {
+function joinLines() {
       const input = document.getElementById('input').value;
       const delimiter = document.getElementById('delimiter').value;
       const trimLines = document.getElementById('trim-lines').checked;
       const skipEmpty = document.getElementById('skip-empty').checked;
+      const wrapChar = document.getElementById('wrap-char').value;
 
       let lines = input.split('\n');
       if (trimLines) lines = lines.map(l => l.trim());
       if (skipEmpty) lines = lines.filter(l => l !== '');
+
+      if (wrapChar) {
+        const open = wrapChar;
+        const close = closingPairs[wrapChar] || wrapChar;
+        lines = lines.map(l => open + l + close);
+      }
 
       document.getElementById('output').textContent = lines.join(delimiter);
     }
