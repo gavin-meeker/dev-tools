@@ -252,8 +252,8 @@ Write some **markdown** here..."></textarea>
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
       html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
-      html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-      html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+      html = html.replace(/(?<!\w)__(.+?)__(?!\w)/g, '<strong>$1</strong>');
+      html = html.replace(/(?<!\w)_(.+?)_(?!\w)/g, '<em>$1</em>');
 
       // Strikethrough
       html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
