@@ -3,20 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>Word Counter - Dev Tools</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
   <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
-    <nav><a href="../index.html">All Tools</a></nav>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
   <main>
-    <h1>Word Counter</h1>
+    <div class="page-title-bar">
+      <h1>Word Counter</h1>
+      <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+    </div>
     <div class="tool-container">
       <label for="input">Input</label>
-      <textarea id="input" placeholder="Paste your text here..." oninput="count()"></textarea>
+      <div class="input-wrap">
+        <textarea id="input" placeholder="Paste your text here..." oninput="count()"></textarea>
+        <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
 
       <div class="output-area" id="stats">
         <p><strong>Characters:</strong> <span id="chars">0</span></p>
@@ -40,5 +49,10 @@
       document.getElementById('paragraphs').textContent = text.trim() === '' ? 0 : text.split(/\n\s*\n/).filter(p => p.trim()).length;
     }
   </script>
+<script src="../shared.js"></script>
+  <script>
+    loadFromHash();
+  </script>
+<script src="../autosave.js"></script>
 </body>
 </html>

@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>JSON Formatter - Dev Tools</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
     .output-pre {
-      font-family: monospace;
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
       font-size: 0.9rem;
       background: var(--color-bg);
       border: 1px solid var(--color-border);
@@ -19,41 +20,33 @@
       color: var(--color-text);
     }
 
-    .error-msg {
-      color: #f85149;
-      font-weight: 600;
-      margin-top: 0.5rem;
-    }
-
     .indent-input {
       width: 60px;
       padding: 0.5rem;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
       font-size: 0.95rem;
-      background: var(--color-bg);
-      color: var(--color-text);
       text-align: center;
     }
-
-    .json-key { color: #ffb074; }
-    .json-string { color: #a5d6ff; }
-    .json-number { color: #79c0ff; }
-    .json-bool { color: #f85149; }
-    .json-null { color: #8b949e; }
   </style>
 </head>
 <body>
   <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
-    <nav><a href="../index.html">All Tools</a></nav>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
   <main>
-    <h1>JSON Formatter</h1>
+    <div class="page-title-bar">
+      <h1>JSON Formatter</h1>
+      <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+    </div>
     <div class="tool-container">
       <label for="input">Input</label>
-      <textarea id="input" placeholder='{"name":"John","age":30,"tags":["dev","js"]}'></textarea>
+      <div class="input-wrap">
+        <textarea id="input" placeholder='{"name":"John","age":30,"tags":["dev","js"]}'></textarea>
+        <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
 
       <div class="btn-row" style="align-items: center;">
         <button onclick="format('pretty')">Pretty Print</button>
@@ -70,7 +63,7 @@
         <label>Output</label>
         <div class="output-wrap">
           <pre class="output-pre" id="output"></pre>
-          <button class="copy-icon" onclick="copyOutput(this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button class="copy-icon" onclick="copyOutput()" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
       </div>
     </div>
@@ -117,12 +110,8 @@
         .replace(/(?<=[:,\[\s])(null)/g, '<span class="json-null">$1</span>');
     }
 
-    function copyOutput(btn) {
-      const text = document.getElementById('output').textContent;
-      if (!text) return;
-      navigator.clipboard.writeText(text);
-      btn.classList.add('copied');
-      setTimeout(() => btn.classList.remove('copied'), 1500);
+    function copyOutput() {
+      copyToClipboard(document.getElementById('output').textContent);
     }
 
     function escapeHtml(str) {
@@ -131,5 +120,10 @@
       return div.innerHTML;
     }
   </script>
+<script src="../shared.js"></script>
+  <script>
+    loadFromHash();
+  </script>
+<script src="../autosave.js"></script>
 </body>
 </html>

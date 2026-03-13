@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>JWT Decoder - Dev Tools</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
@@ -41,22 +42,14 @@
       background: var(--color-bg);
       min-height: 80px;
       flex: 1;
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
     }
 
-    .part-header { background: #1e3a5f; color: #79b8ff; }
-    .part-payload { background: #2d1b69; color: #b392f0; }
-    .part-signature { background: #5c1a3e; color: #f097b2; }
+    .part-header { background: var(--color-jwt-header-bg); color: var(--color-jwt-header-text); }
+    .part-payload { background: var(--color-jwt-payload-bg); color: var(--color-jwt-payload-text); }
+    .part-signature { background: var(--color-jwt-signature-bg); color: var(--color-jwt-signature-text); }
 
-    .jwt-input {
-      font-family: monospace;
-      word-break: break-all;
-    }
-
-    .error-msg {
-      color: #f85149;
-      font-weight: 600;
-      margin-top: 0.5rem;
-    }
+    .jwt-input { word-break: break-all; }
 
     .exp-info {
       margin-top: 1rem;
@@ -65,27 +58,26 @@
       font-size: 0.9rem;
     }
 
-    .exp-valid { background: #0f2d1a; color: #3fb950; }
-    .exp-expired { background: #3d1214; color: #f85149; }
-
-    .json-key { color: #ffb074; }
-    .json-string { color: #a5d6ff; }
-    .json-number { color: #79c0ff; }
-    .json-bool { color: #f85149; }
-    .json-null { color: #8b949e; }
+    .exp-valid { background: var(--color-success-bg); color: var(--color-success); }
+    .exp-expired { background: var(--color-error-bg); color: var(--color-error); }
   </style>
 </head>
 <body>
   <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
-    <nav><a href="../index.html">All Tools</a></nav>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
   <main>
     <h1>JWT Decoder</h1>
     <div class="tool-container">
       <label for="input">Paste JWT</label>
-      <textarea id="input" class="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIs..." oninput="decode()"></textarea>
+      <div class="input-wrap">
+        <textarea id="input" class="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIs..." oninput="decode()"></textarea>
+        <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
 
       <div id="error"></div>
       <div id="expiry"></div>
@@ -197,5 +189,6 @@
       return div.innerHTML;
     }
   </script>
+<script src="../shared.js"></script>
 </body>
 </html>

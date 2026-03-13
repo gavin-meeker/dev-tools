@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>Markdown Preview - Dev Tools</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
@@ -15,6 +16,16 @@
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
       margin-top: 1rem;
+      transition: grid-template-columns 0.25s ease;
+    }
+
+    .split-view.preview-focused {
+      grid-template-columns: minmax(0, 0.12fr) 1fr;
+    }
+
+    .split-view.preview-focused textarea {
+      white-space: pre;
+      overflow: hidden;
     }
 
     @media (max-width: 700px) {
@@ -24,6 +35,8 @@
     .split-view textarea {
       min-height: 400px;
       margin-bottom: 0;
+      overflow: hidden;
+      resize: none;
     }
 
     .preview-pane {
@@ -62,15 +75,15 @@
     }
 
     .preview-pane code {
-      background: #1a1e24;
+      background: var(--color-code-bg);
       padding: 0.15em 0.4em;
       border-radius: 4px;
       font-size: 0.9em;
-      color: #f0883e;
+      color: var(--color-code-inline);
     }
 
     .preview-pane pre {
-      background: #1a1e24;
+      background: var(--color-code-bg);
       border: 1px solid var(--color-border);
       border-radius: var(--radius);
       padding: 0.75rem;
@@ -125,25 +138,36 @@
     }
 
     .preview-pane th {
-      background: #1a1e24;
+      background: var(--color-code-bg);
     }
   </style>
 </head>
 <body>
   <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
-    <nav><a href="../index.html">All Tools</a></nav>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
   <main>
-    <h1>Markdown Preview</h1>
+    <div class="page-title-bar">
+      <h1>Markdown Preview</h1>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn-clear" id="focus-toggle" onclick="toggleFocus()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Focus Preview</button>
+        <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+      </div>
+    </div>
     <div class="tool-container">
       <div class="split-view">
         <div>
           <label for="input">Markdown</label>
-          <textarea id="input" oninput="render()" placeholder="# Hello World
+          <div class="input-wrap">
+            <textarea id="input" oninput="render()" placeholder="# Hello World
 
 Write some **markdown** here..."></textarea>
+            <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
         </div>
         <div>
           <label>Preview</label>
@@ -155,9 +179,25 @@ Write some **markdown** here..."></textarea>
   <footer>Made by Gavin Meeker</footer>
 
   <script>
+    function toggleFocus() {
+      document.querySelector('.split-view').classList.toggle('preview-focused');
+      var btn = document.getElementById('focus-toggle');
+      var focused = document.querySelector('.split-view').classList.contains('preview-focused');
+      btn.innerHTML = focused
+        ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Split View'
+        : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Focus Preview';
+    }
+
     function render() {
       const md = document.getElementById('input').value;
       document.getElementById('preview').innerHTML = parseMarkdown(md);
+      autoResize();
+    }
+
+    function autoResize() {
+      const ta = document.getElementById('input');
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
     }
 
     function parseMarkdown(md) {
@@ -283,8 +323,12 @@ function greet(name) {
 ---
 
 *Rendered entirely client-side with vanilla JS.*`;
-
-    render();
   </script>
+<script src="../shared.js"></script>
+  <script>
+    render();
+    if (loadFromHash()) render();
+  </script>
+<script src="../autosave.js"></script>
 </body>
 </html>

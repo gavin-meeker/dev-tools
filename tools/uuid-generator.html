@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>UUID Generator - Dev Tools</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
@@ -55,8 +56,10 @@
 </head>
 <body>
   <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
-    <nav><a href="../index.html">All Tools</a></nav>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
   <main>
@@ -65,7 +68,7 @@
       <label>UUID v4</label>
       <div class="output-wrap">
         <div class="uuid-display" id="single-uuid"></div>
-        <button class="copy-icon" onclick="copyFrom('single-uuid', this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="copy-icon" onclick="copyFrom('single-uuid')" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
       </div>
 
       <div class="btn-row">
@@ -81,7 +84,7 @@
       </div>
       <div class="output-wrap">
         <div class="batch-output" id="batch-output"></div>
-        <button class="copy-icon" onclick="copyFrom('batch-output', this)" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="copy-icon" onclick="copyFrom('batch-output')" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
       </div>
     </div>
   </main>
@@ -103,15 +106,15 @@
       document.getElementById('batch-output').textContent = uuids.join('\n');
     }
 
-    function copyFrom(id, btn) {
-      const text = document.getElementById(id).textContent;
-      if (!text) return;
-      navigator.clipboard.writeText(text);
-      btn.classList.add('copied');
-      setTimeout(() => btn.classList.remove('copied'), 1500);
+    function copyFrom(id) {
+      copyToClipboard(document.getElementById(id).textContent);
     }
-
-    generateOne();
   </script>
+<script src="../shared.js"></script>
+  <script>
+    generateOne();
+    loadFromHash();
+  </script>
+<script src="../autosave.js"></script>
 </body>
 </html>
