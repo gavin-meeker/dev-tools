@@ -200,6 +200,36 @@ Write some **markdown** here..."></textarea>
       ta.style.height = ta.scrollHeight + 'px';
     }
 
+    function buildNestedList(block, tag, bulletRe) {
+      var lines = block.split('\n');
+      var result = '';
+      var stack = [];
+      for (var i = 0; i < lines.length; i++) {
+        var m = lines[i].match(bulletRe);
+        if (!m) continue;
+        var indent = m[1].length;
+        var content = m[3];
+        if (stack.length === 0) {
+          result += '<' + tag + '><li>' + content;
+          stack.push(indent);
+        } else if (indent > stack[stack.length - 1]) {
+          result += '<' + tag + '><li>' + content;
+          stack.push(indent);
+        } else {
+          while (stack.length > 1 && indent < stack[stack.length - 1]) {
+            stack.pop();
+            result += '</li></' + tag + '>';
+          }
+          result += '</li><li>' + content;
+        }
+      }
+      while (stack.length > 0) {
+        stack.pop();
+        result += '</li></' + tag + '>';
+      }
+      return result;
+    }
+
     function parseMarkdown(md) {
       // Escape HTML
       let html = md
@@ -259,19 +289,13 @@ Write some **markdown** here..."></textarea>
       html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
       // Unordered lists
-      html = html.replace(/^(?:[-*+]\s+.+\n?)+/gm, function(block) {
-        const items = block.trim().split('\n').map(line =>
-          '<li>' + line.replace(/^[-*+]\s+/, '') + '</li>'
-        ).join('');
-        return '<ul>' + items + '</ul>';
+      html = html.replace(/^(?:[ ]*[-*+]\s+.+\n?)+/gm, function(block) {
+        return buildNestedList(block.trim(), 'ul', /^(\s*)([-*+])\s+(.+)/);
       });
 
       // Ordered lists
-      html = html.replace(/^(?:\d+\.\s+.+\n?)+/gm, function(block) {
-        const items = block.trim().split('\n').map(line =>
-          '<li>' + line.replace(/^\d+\.\s+/, '') + '</li>'
-        ).join('');
-        return '<ol>' + items + '</ol>';
+      html = html.replace(/^(?:[ ]*\d+\.\s+.+\n?)+/gm, function(block) {
+        return buildNestedList(block.trim(), 'ol', /^(\s*)(\d+\.)\s+(.+)/);
       });
 
       // Paragraphs: wrap remaining loose text
