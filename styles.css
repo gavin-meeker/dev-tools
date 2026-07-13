@@ -27,9 +27,11 @@
   --color-diff-added-bg: #0f2d1a;
   --color-diff-added-num: #133a1f;
   --color-diff-added-text: #3fb950;
+  --color-diff-added-char: rgba(63, 185, 100, 0.4);
   --color-diff-removed-bg: #3d1214;
   --color-diff-removed-num: #4d1519;
   --color-diff-removed-text: #f85149;
+  --color-diff-removed-char: rgba(248, 81, 73, 0.4);
   --color-diff-empty: #161b22;
 
   /* JSON syntax */
@@ -73,9 +75,11 @@
   --color-diff-added-bg: #dafbe1;
   --color-diff-added-num: #c6f2cf;
   --color-diff-added-text: #116329;
+  --color-diff-added-char: rgba(17, 99, 41, 0.25);
   --color-diff-removed-bg: #ffebe9;
   --color-diff-removed-num: #ffd7d5;
   --color-diff-removed-text: #82071e;
+  --color-diff-removed-char: rgba(130, 7, 30, 0.25);
   --color-diff-empty: #f6f8fa;
 
   /* JSON syntax */
@@ -579,6 +583,18 @@ footer {
 .diff-summary { margin-bottom: 0.5rem; }
 .diff-stat-added { color: var(--color-diff-added-text); }
 .diff-stat-removed { color: var(--color-diff-removed-text); }
+
+/* Intra-line char highlights inside a paired removed/added line */
+.diff-char-removed {
+  background: var(--color-diff-removed-char);
+  border-radius: 2px;
+  font-weight: 600;
+}
+.diff-char-added {
+  background: var(--color-diff-added-char);
+  border-radius: 2px;
+  font-weight: 600;
+}
 
 /* ---- Shared JSON syntax colors ---- */
 .json-key { color: var(--color-json-key); }

@@ -99,10 +99,20 @@
           }
           const maxLen = Math.max(removed.length, added.length);
           for (let j = 0; j < maxLen; j++) {
-            rows.push({
-              left: j < removed.length ? { type: 'removed', value: removed[j] } : { type: 'empty', value: '' },
-              right: j < added.length ? { type: 'added', value: added[j] } : { type: 'empty', value: '' },
-            });
+            const rem = j < removed.length ? removed[j] : null;
+            const add = j < added.length ? added[j] : null;
+            if (rem !== null && add !== null) {
+              const cd = charDiff(rem, add);
+              rows.push({
+                left: { type: 'removed', value: renderCharDiffSide(cd, 'left'), isHtml: true },
+                right: { type: 'added', value: renderCharDiffSide(cd, 'right'), isHtml: true },
+              });
+            } else {
+              rows.push({
+                left: rem !== null ? { type: 'removed', value: rem } : { type: 'empty', value: '' },
+                right: add !== null ? { type: 'added', value: add } : { type: 'empty', value: '' },
+              });
+            }
           }
         } else if (d.type === 'added') {
           rows.push({
@@ -120,12 +130,12 @@
         // Left side
         if (row.left.type === 'unchanged' || row.left.type === 'removed') leftNum++;
         const lNum = row.left.type === 'empty' ? '' : leftNum;
-        leftHtml += renderLine(row.left.type, lNum, row.left.value);
+        leftHtml += renderLine(row.left.type, lNum, row.left.value, row.left.isHtml);
 
         // Right side
         if (row.right.type === 'unchanged' || row.right.type === 'added') rightNum++;
         const rNum = row.right.type === 'empty' ? '' : rightNum;
-        rightHtml += renderLine(row.right.type, rNum, row.right.value);
+        rightHtml += renderLine(row.right.type, rNum, row.right.value, row.right.isHtml);
       }
 
       const added = diff.filter(d => d.type === 'added').length;
@@ -156,11 +166,47 @@
       });
     }
 
-    function renderLine(type, num, value) {
+    function renderLine(type, num, value, isHtml) {
       return '<div class="diff-line ' + type + '">'
         + '<span class="diff-line-num">' + num + '</span>'
-        + '<span class="diff-line-content">' + escapeHtml(value) + '</span>'
+        + '<span class="diff-line-content">' + (isHtml ? value : escapeHtml(value)) + '</span>'
         + '</div>';
+    }
+
+    // Character-level Myers diff for a paired line change.
+    // Falls back to whole-line highlighting on very long lines (Myers is O(N*M)).
+    function charDiff(a, b) {
+      const CAP = 2000;
+      if (a.length > CAP || b.length > CAP) {
+        return [
+          { type: 'removed', value: a },
+          { type: 'added', value: b },
+        ];
+      }
+      return myersDiff(Array.from(a), Array.from(b));
+    }
+
+    function renderCharDiffSide(diff, side) {
+      // Coalesce consecutive same-type chars into a single span so rounded
+      // corners on the highlight don't fragment the visual run.
+      let html = '';
+      let i = 0;
+      while (i < diff.length) {
+        const type = diff[i].type;
+        let run = '';
+        while (i < diff.length && diff[i].type === type) {
+          run += diff[i].value;
+          i++;
+        }
+        if (type === 'unchanged') {
+          html += escapeHtml(run);
+        } else if (type === 'removed' && side === 'left') {
+          html += '<span class="diff-char-removed">' + escapeHtml(run) + '</span>';
+        } else if (type === 'added' && side === 'right') {
+          html += '<span class="diff-char-added">' + escapeHtml(run) + '</span>';
+        }
+      }
+      return html;
     }
 
     function myersDiff(left, right) {
