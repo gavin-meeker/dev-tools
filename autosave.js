@@ -20,23 +20,22 @@
     localStorage.setItem(key(el.id), el.value);
   }
 
+  // When a share-link hash is present, that is the source of truth — skip restore
+  // so autosaved content doesn't briefly flash in before the hash content loads.
+  const hasHash = location.hash && location.hash.length > 1;
+
   function attach(el) {
     if (!el.id) return;
-    restore(el);
+    if (!hasHash) restore(el);
     el.addEventListener('input', function() {
       clearTimeout(timers[el.id]);
       timers[el.id] = setTimeout(function() { save(el); }, DEBOUNCE_MS);
     });
   }
 
-  // Run on DOMContentLoaded so elements exist
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  function init() {
-    document.querySelectorAll('textarea, input[type="text"]').forEach(attach);
-  }
+  // This script is loaded at the end of <body>, so all textareas are in the DOM
+  // by the time it runs. Restoring synchronously (rather than on DOMContentLoaded)
+  // means content is in place before the initial paint, avoiding a scroll-jump
+  // when the browser restores scroll position after a refresh.
+  document.querySelectorAll('textarea, input[type="text"]').forEach(attach);
 })();
