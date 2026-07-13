@@ -100,8 +100,115 @@ function _decompressStr(encoded) {
   ).text();
 }
 
+// ---- v2 hash format: '~' prefix + deflate-raw of a compact binary payload ----
+// Payload layout: [flag u8][timestamp u32 BE][content bytes...]
+// flag bit 0 = tokens substituted (see _v2Tokens / _v2Codes)
+// flag bit 1 = content is JSON.stringify(values); else single value (raw utf-8 bytes)
+var _v2Tokens = [
+  '### ', '\n> ', '## ', '\n| ', '|--', ' | ', '```', '":"', '","',
+  '](', '~~', '**', '- ', '# ', '\n\n'
+];
+var _v2Codes = (function() {
+  var arr = [];
+  for (var c = 2; c <= 0x1D && arr.length < _v2Tokens.length; c++) {
+    if (c === 9 || c === 10 || c === 13) continue;
+    arr.push(c);
+  }
+  return arr;
+})();
+var _v2ReservedRegex = /[\x02-\x08\x0B\x0C\x0E-\x1D]/;
+
+function _v2Substitute(s) {
+  for (var i = 0; i < _v2Tokens.length; i++) {
+    s = s.split(_v2Tokens[i]).join(String.fromCharCode(_v2Codes[i]));
+  }
+  return s;
+}
+
+function _v2Unsubstitute(s) {
+  for (var i = _v2Tokens.length - 1; i >= 0; i--) {
+    s = s.split(String.fromCharCode(_v2Codes[i])).join(_v2Tokens[i]);
+  }
+  return s;
+}
+
+function _v2EncodeBytes(timestamp, values) {
+  var isMulti = values.length !== 1;
+  var content = isMulti ? JSON.stringify(values) : values[0];
+  var canSub = !_v2ReservedRegex.test(content);
+  var flag = (canSub ? 1 : 0) | (isMulti ? 2 : 0);
+  if (canSub) content = _v2Substitute(content);
+  var contentBytes = new TextEncoder().encode(content);
+  var out = new Uint8Array(5 + contentBytes.length);
+  out[0] = flag;
+  out[1] = (timestamp >>> 24) & 0xFF;
+  out[2] = (timestamp >>> 16) & 0xFF;
+  out[3] = (timestamp >>> 8) & 0xFF;
+  out[4] = timestamp & 0xFF;
+  out.set(contentBytes, 5);
+  return out;
+}
+
+function _v2DecodeBytes(bytes) {
+  var flag = bytes[0];
+  var timestamp = bytes[1] * 0x1000000 + (bytes[2] << 16) + (bytes[3] << 8) + bytes[4];
+  var content = new TextDecoder().decode(bytes.subarray(5));
+  if (flag & 1) content = _v2Unsubstitute(content);
+  var values = (flag & 2) ? JSON.parse(content) : [content];
+  return { timestamp: timestamp, values: values };
+}
+
+function _v2Compress(timestamp, values) {
+  var bytes = _v2EncodeBytes(timestamp, values);
+  return new Response(
+    new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))
+  ).arrayBuffer().then(function(buf) {
+    var b = new Uint8Array(buf);
+    var binary = '';
+    for (var i = 0; i < b.length; i++) binary += String.fromCharCode(b[i]);
+    return '~' + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  });
+}
+
+function _v2Decompress(hash) {
+  var b64 = hash.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  var binary = atob(b64);
+  var bytes = new Uint8Array(binary.length);
+  for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Response(
+    new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+  ).arrayBuffer().then(function(buf) {
+    return _v2DecodeBytes(new Uint8Array(buf));
+  });
+}
+
+function _formatShareTime(secs) {
+  if (!secs) return '';
+  var d = new Date(secs * 1000);
+  var pad = function(n) { return n < 10 ? '0' + n : String(n); };
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+    ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function _renderShareTime(secs) {
+  var el = document.getElementById('share-timestamp');
+  if (!el) return;
+  el.textContent = secs ? 'Shared ' + _formatShareTime(secs) : '';
+}
+
 // ---- URL hash state ----
 var _inputSelector = 'textarea[id], input[type="text"][id]';
+
+function _applyHashValues(values) {
+  var els = document.querySelectorAll(_inputSelector);
+  els.forEach(function(el, i) {
+    if (i < values.length && values[i]) {
+      el.value = values[i];
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+}
 
 function saveToHash() {
   var values = [];
@@ -115,25 +222,40 @@ function saveToHash() {
   // Trim trailing empty strings to shorten the array
   while (values.length && !values[values.length - 1]) values.pop();
 
-  _compressStr(JSON.stringify(values)).then(function(compressed) {
-    var fullUrl = location.origin + location.pathname + '#' + compressed;
-    history.replaceState(null, '', '#' + compressed);
+  var timestamp = Math.floor(Date.now() / 1000);
+  _v2Compress(timestamp, values).then(function(hash) {
+    if (hash.length > 20000) {
+      var proceed = confirm(
+        'This share link is ' + hash.length.toLocaleString() + ' characters long. ' +
+        'Some apps (like Slack) may truncate very long URLs when pasted, which will ' +
+        'prevent the link from opening correctly. Copy anyway?'
+      );
+      if (!proceed) return;
+    }
+    var fullUrl = location.origin + location.pathname + '#' + hash;
+    history.replaceState(null, '', '#' + hash);
     navigator.clipboard.writeText(fullUrl);
+    _renderShareTime(timestamp);
     showToast('Share link copied to clipboard');
   });
 }
 
 function loadFromHash() {
   if (!location.hash || location.hash.length < 2) return false;
-  _decompressStr(location.hash.slice(1)).then(function(json) {
-    var values = JSON.parse(json);
-    var els = document.querySelectorAll(_inputSelector);
-    els.forEach(function(el, i) {
-      if (i < values.length && values[i]) {
-        el.value = values[i];
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-      }
+  var hash = location.hash.slice(1);
+  var promise;
+  if (hash.charAt(0) === '~') {
+    promise = _v2Decompress(hash).then(function(result) {
+      _applyHashValues(result.values);
+      _renderShareTime(result.timestamp);
     });
-  }).catch(function() {});
+  } else {
+    // Legacy v1: JSON-string + deflate-raw + base64url (no timestamp)
+    promise = _decompressStr(hash).then(function(json) {
+      _applyHashValues(JSON.parse(json));
+      _renderShareTime(0);
+    });
+  }
+  promise.catch(function() {});
   return true;
 }

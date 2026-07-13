@@ -11,25 +11,69 @@
       max-width: 95%;
     }
 
+    .view-tabs {
+      display: inline-flex;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 0.25rem;
+    }
+
+    .view-tabs button {
+      background: transparent;
+      border: none;
+      padding: 0.5rem 1rem;
+      color: var(--color-text-light);
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-right: 1px solid var(--color-border);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .view-tabs button:last-child { border-right: none; }
+
+    .view-tabs button:hover {
+      color: var(--color-text);
+    }
+
+    .view-tabs button.active {
+      background: var(--color-accent);
+      color: #fff;
+    }
+
+    .share-timestamp {
+      font-size: 0.85rem;
+      color: var(--color-text-light);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+      .share-timestamp { display: none; }
+    }
+
     .split-view {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
       margin-top: 1rem;
-      transition: grid-template-columns 0.25s ease;
     }
 
-    .split-view.preview-focused {
-      grid-template-columns: minmax(0, 0.12fr) 1fr;
+    /* Prevent long unbreakable content (URLs, hashes) from forcing a grid track wider than 1fr */
+    .split-view > * { min-width: 0; }
+
+    .split-view.mode-preview,
+    .split-view.mode-text {
+      grid-template-columns: 1fr;
     }
 
-    .split-view.preview-focused textarea {
-      white-space: pre;
-      overflow: hidden;
+    .split-view.mode-preview .pane-input,
+    .split-view.mode-text .pane-preview {
+      display: none;
     }
 
     @media (max-width: 700px) {
-      .split-view { grid-template-columns: 1fr; }
+      .split-view.mode-compare { grid-template-columns: 1fr; }
+      .view-tabs button { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
     }
 
     .split-view textarea {
@@ -37,6 +81,16 @@
       margin-bottom: 0;
       overflow: hidden;
       resize: none;
+    }
+
+    .split-view.mode-text textarea {
+      min-height: 60vh;
+      font-size: 1rem;
+    }
+
+    .split-view.mode-preview .preview-pane,
+    .split-view.mode-text textarea {
+      max-width: 100%;
     }
 
     .preview-pane {
@@ -48,6 +102,15 @@
       overflow: auto;
       font-size: 0.95rem;
       line-height: 1.7;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* Let <pre> code blocks scroll horizontally instead of breaking mid-token */
+    .preview-pane pre,
+    .preview-pane pre code {
+      overflow-wrap: normal;
+      word-break: normal;
     }
 
     /* Markdown rendered styles */
@@ -153,14 +216,19 @@
   <main>
     <div class="page-title-bar">
       <h1>Markdown Preview</h1>
-      <div style="display: flex; gap: 0.5rem;">
-        <button class="btn-clear" id="focus-toggle" onclick="toggleFocus()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Focus Preview</button>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span id="share-timestamp" class="share-timestamp"></span>
         <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
       </div>
     </div>
     <div class="tool-container">
-      <div class="split-view">
-        <div>
+      <div class="view-tabs" role="tablist" aria-label="View mode">
+        <button type="button" data-view="compare" onclick="setView('compare')">Compare</button>
+        <button type="button" data-view="preview" onclick="setView('preview')">Preview</button>
+        <button type="button" data-view="text" onclick="setView('text')">Text</button>
+      </div>
+      <div class="split-view mode-compare" id="split-view">
+        <div class="pane-input">
           <label for="input">Markdown</label>
           <div class="input-wrap">
             <textarea id="input" oninput="render()" placeholder="# Hello World
@@ -169,7 +237,7 @@ Write some **markdown** here..."></textarea>
             <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         </div>
-        <div>
+        <div class="pane-preview">
           <label>Preview</label>
           <div class="preview-pane" id="preview"></div>
         </div>
@@ -179,13 +247,17 @@ Write some **markdown** here..."></textarea>
   <footer>Made by Gavin Meeker</footer>
 
   <script>
-    function toggleFocus() {
-      document.querySelector('.split-view').classList.toggle('preview-focused');
-      var btn = document.getElementById('focus-toggle');
-      var focused = document.querySelector('.split-view').classList.contains('preview-focused');
-      btn.innerHTML = focused
-        ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Split View'
-        : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Focus Preview';
+    var VIEW_STORAGE_KEY = 'devtools:markdown-view';
+
+    function setView(mode) {
+      var sv = document.getElementById('split-view');
+      sv.classList.remove('mode-compare', 'mode-preview', 'mode-text');
+      sv.classList.add('mode-' + mode);
+      document.querySelectorAll('.view-tabs button').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.view === mode);
+      });
+      try { localStorage.setItem(VIEW_STORAGE_KEY, mode); } catch (e) {}
+      if (mode !== 'preview') autoResize();
     }
 
     function render() {
@@ -237,9 +309,16 @@ Write some **markdown** here..."></textarea>
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      // Fenced code blocks
+      // Fenced code blocks — stash as placeholders so later passes don't touch their contents
+      var codeBlocks = [];
       html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.trimEnd() + '</code></pre>';
+        codeBlocks.push('<pre><code>' + code.trimEnd() + '</code></pre>');
+        return '%%CB' + (codeBlocks.length - 1) + '%%';
+      });
+
+      // Preserve extra blank lines as visible spacing (3+ newlines => extra <br>s)
+      html = html.replace(/\n{3,}/g, function(m) {
+        return '\n\n' + '<br>'.repeat(m.length - 2) + '\n\n';
       });
 
       // Inline code (must come after fenced blocks)
@@ -308,6 +387,10 @@ Write some **markdown** here..."></textarea>
       // Clean up extra newlines
       html = html.replace(/\n{2,}/g, '\n');
 
+      // Restore fenced code blocks (unwrap if paragraph pass wrapped the placeholder)
+      html = html.replace(/<p>%%CB(\d+)%%<\/p>/g, function(_, i) { return codeBlocks[+i]; });
+      html = html.replace(/%%CB(\d+)%%/g, function(_, i) { return codeBlocks[+i]; });
+
       return html.trim();
     }
 
@@ -350,6 +433,12 @@ function greet(name) {
   </script>
 <script src="../shared.js"></script>
   <script>
+    (function initView() {
+      var saved = null;
+      try { saved = localStorage.getItem(VIEW_STORAGE_KEY); } catch (e) {}
+      var defaultView = window.innerWidth <= 700 ? 'preview' : 'compare';
+      setView(saved || defaultView);
+    })();
     render();
     if (loadFromHash()) render();
   </script>
