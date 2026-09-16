@@ -9,6 +9,9 @@
   <style>
     main { max-width: max(75%, 800px); }
 
+    :root { --color-section-bg: #11151b; }
+    [data-theme="light"] { --color-section-bg: #e4e7ec; }
+
     .lc-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -77,6 +80,7 @@
       border-radius: var(--radius);
       overflow: auto;
       max-height: 70vh;
+      max-width: 800px;
     }
     .lc-table {
       width: 100%;
@@ -104,7 +108,7 @@
     .lc-item { word-break: break-all; }
 
     .lc-section-row td {
-      background: var(--color-surface);
+      background: var(--color-section-bg);
       border-top: 1px solid var(--color-border);
       padding: 0;
     }
