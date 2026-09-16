@@ -858,13 +858,10 @@ button:hover {
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: clip;
   background: var(--color-recess);
   margin-top: 0.5rem;
 }
-
-.diff-side { overflow: auto; }
-.diff-side:first-child { border-right: 1px solid var(--color-border); }
 
 .diff-side-header {
   font-family: var(--font-mono);
@@ -878,11 +875,16 @@ button:hover {
   justify-content: space-between;
   position: sticky;
   top: 0;
+  z-index: 1;
 }
+
+.diff-side-header.left,
+.diff-line.left { border-right: 1px solid var(--color-border); }
 
 .diff-line {
   display: flex;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   line-height: 1.8;
   font-family: var(--font-mono);
   font-size: 0.82rem;
@@ -892,6 +894,7 @@ button:hover {
 .diff-line-num {
   width: 2.6rem;
   min-width: 2.6rem;
+  flex-shrink: 0;
   text-align: right;
   padding: 0 0.6rem 0 0.3rem;
   color: var(--color-text-light);
@@ -912,7 +915,7 @@ button:hover {
 .diff-line.removed .diff-line-num { background: var(--color-diff-removed-num); color: var(--color-diff-removed-text); opacity: 1; }
 .diff-line.removed .diff-line-content { color: var(--color-text); }
 
-.diff-line.empty { background: var(--color-diff-empty); opacity: 0.4; }
+.diff-line.empty { background: var(--color-diff-empty); }
 .diff-line.empty .diff-line-num { background: var(--color-diff-empty); }
 
 .diff-line.unchanged { background: transparent; }
@@ -928,8 +931,13 @@ button:hover {
 }
 
 @media (max-width: 640px) {
+  /* One column stacks each row's original directly above its modified
+     counterpart; the tinted number gutter is the side cue, so the column
+     headers would sit orphaned at the top. */
   .diff-view { grid-template-columns: 1fr; }
-  .diff-side:first-child { border-right: 0; border-bottom: 1px solid var(--color-border); }
+  .diff-side-header { display: none; }
+  .diff-line.left { border-right: 0; }
+  .diff-line.right { border-bottom: 1px solid var(--color-border); }
 }
 
 /* ==========================================================================

@@ -147,17 +147,18 @@
         }
       }
 
-      // Render
+      // Render. Both sides go into a single grid so a wrapped line on one
+      // side stretches its counterpart on the other, keeping rows aligned.
       let leftNum = 0, rightNum = 0;
-      let leftHtml = '', rightHtml = '';
+      let rowsHtml = '';
       for (const row of rows) {
         if (row.left.type === 'unchanged' || row.left.type === 'removed') leftNum++;
         const lNum = row.left.type === 'empty' ? '' : leftNum;
-        leftHtml += renderLine(row.left.type, lNum, row.left.value, row.left.isHtml);
+        rowsHtml += renderLine(row.left.type, lNum, row.left.value, row.left.isHtml, 'left');
 
         if (row.right.type === 'unchanged' || row.right.type === 'added') rightNum++;
         const rNum = row.right.type === 'empty' ? '' : rightNum;
-        rightHtml += renderLine(row.right.type, rNum, row.right.value, row.right.isHtml);
+        rowsHtml += renderLine(row.right.type, rNum, row.right.value, row.right.isHtml, 'right');
       }
 
       const addedCount = displayDiff.filter(d => d.type === 'added').length;
@@ -171,27 +172,14 @@
 
       output.innerHTML = summary
         + '<div class="diff-view">'
-        + '<div class="diff-side"><div class="diff-side-header"><span>original</span><span>' + leftNum + ' lines</span></div>' + leftHtml + '</div>'
-        + '<div class="diff-side"><div class="diff-side-header"><span>modified</span><span>' + rightNum + ' lines</span></div>' + rightHtml + '</div>'
+        + '<div class="diff-side-header left"><span>original</span><span>' + leftNum + ' lines</span></div>'
+        + '<div class="diff-side-header"><span>modified</span><span>' + rightNum + ' lines</span></div>'
+        + rowsHtml
         + '</div>';
-
-      // Sync scrolling
-      const sides = output.querySelectorAll('.diff-side');
-      let syncing = false;
-      sides.forEach((side, idx) => {
-        side.addEventListener('scroll', () => {
-          if (syncing) return;
-          syncing = true;
-          const other = sides[idx === 0 ? 1 : 0];
-          other.scrollTop = side.scrollTop;
-          other.scrollLeft = side.scrollLeft;
-          syncing = false;
-        });
-      });
     }
 
-    function renderLine(type, num, value, isHtml) {
-      return '<div class="diff-line ' + type + '">'
+    function renderLine(type, num, value, isHtml, side) {
+      return '<div class="diff-line ' + type + ' ' + side + '">'
         + '<span class="diff-line-num">' + num + '</span>'
         + '<span class="diff-line-content">' + (isHtml ? value : escapeHtml(value)) + '</span>'
         + '</div>';
