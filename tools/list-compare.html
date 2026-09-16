@@ -41,6 +41,7 @@
       line-height: 0;
       border-radius: var(--radius-sm);
     }
+    .lc-pane-remove[hidden] { display: none; }
     .lc-pane-remove:hover { background: none; color: var(--color-error); }
     .lc-pane-remove svg {
       width: 1rem;
@@ -263,7 +264,9 @@
       }
       document.getElementById('add-list').disabled = listCount >= MAX_LISTS;
       document.querySelectorAll('.lc-pane-remove').forEach((btn, i) => {
-        btn.style.visibility = listCount > 2 && i < listCount ? 'visible' : 'hidden';
+        // Removed from layout, not just hidden, so the name input stays flush
+        // with the textarea below it when the button isn't available.
+        btn.hidden = !(listCount > 2 && i < listCount);
       });
       localStorage.setItem(COUNT_KEY, String(listCount));
       clearResults();
