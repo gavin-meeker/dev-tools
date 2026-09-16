@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <title>Join Lines - Dev Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Chivo+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -12,12 +15,14 @@
     <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
     <a class="site-title" href="../index.html">Dev Tools</a>
     <span class="header-spacer"></span>
+    <a class="rail-link" href="https://github.com/gavin-meeker/dev-tools" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
     <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
   </header>
 
-  <main>
+  <main class="narrow">
     <div class="page-title-bar">
-      <h1>Join Lines</h1>
+      <h1>Join lines</h1>
+      <span class="page-note">combine lines into one string with a delimiter</span>
       <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
     </div>
     <div class="tool-container">
@@ -29,31 +34,27 @@
 
       <label for="delimiter">Delimiter</label>
       <div class="btn-row" style="align-items: center; margin-bottom: 1rem;">
-        <input type="text" id="delimiter" value=", " style="width: 120px; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: monospace; font-size: 0.95rem;">
-        <button onclick="setDelim(', ')">comma</button>
-        <button onclick="setDelim('; ')">semicolon</button>
-        <button onclick="setDelim(' ')">space</button>
-        <button onclick="setDelim('\t')">tab</button>
-        <button onclick="setDelim('|')">pipe</button>
+        <input type="text" id="delimiter" value=", " style="width: 120px; font-family: var(--font-mono);">
+        <button class="btn-quiet" onclick="setDelim(', ')">comma</button>
+        <button class="btn-quiet" onclick="setDelim('; ')">semicolon</button>
+        <button class="btn-quiet" onclick="setDelim(' ')">space</button>
+        <button class="btn-quiet" onclick="setDelim('\t')">tab</button>
+        <button class="btn-quiet" onclick="setDelim('|')">pipe</button>
       </div>
 
       <label for="wrap-char">Wrap each line in</label>
       <div style="margin-bottom: 1rem;">
-        <input type="text" id="wrap-char" value="" placeholder='e.g. " or ( or [' style="width: 180px; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: monospace; font-size: 0.95rem;">
+        <input type="text" id="wrap-char" value="" placeholder='e.g. " or ( or [' style="width: 180px; font-family: var(--font-mono);">
       </div>
 
       <div class="btn-row">
         <button onclick="joinLines()">Join</button>
-        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
-          <input type="checkbox" id="trim-lines" checked> Trim each line
-        </label>
-        <label style="font-weight: normal; display: flex; align-items: center; gap: 0.3rem;">
-          <input type="checkbox" id="skip-empty" checked> Skip empty lines
-        </label>
+        <label class="opt"><input type="checkbox" id="trim-lines" checked> Trim each line</label>
+        <label class="opt"><input type="checkbox" id="skip-empty" checked> Skip empty lines</label>
       </div>
 
       <div class="output-area">
-        <label>Output</label>
+        <label for="output">Output</label>
         <div class="output-wrap">
           <pre id="output"></pre>
           <button class="copy-icon" onclick="copyOutput()" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -61,7 +62,10 @@
       </div>
     </div>
   </main>
-<footer>Made by Gavin Meeker</footer>
+<footer>
+    <span>Made by Gavin Meeker</span>
+    <span id="share-timestamp"></span>
+  </footer>
 
   <script>
     const closingPairs = { '(': ')', '[': ']', '{': '}', '<': '>' };

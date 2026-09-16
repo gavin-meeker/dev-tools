@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#58a6ff"/>
-  <text x="16" y="23" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">D</text>
+  <rect width="32" height="32" rx="4" fill="#12171a"/>
+  <rect x="6" y="20" width="2" height="6" fill="#e3a13c"/>
+  <rect x="11" y="14" width="2" height="12" fill="#8695a0"/>
+  <rect x="16" y="8" width="2" height="18" fill="#e3a13c"/>
+  <rect x="21" y="16" width="2" height="10" fill="#8695a0"/>
+  <rect x="26" y="11" width="2" height="15" fill="#e3a13c"/>
 </svg>
