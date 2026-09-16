@@ -1,3 +1,10 @@
+/* ==========================================================================
+   Dev Tools — instrument panel
+   Dark is the default theme; [data-theme="light"] overrides the tokens.
+   Variable names are kept stable because individual tool pages reference
+   them from their own inline <style> blocks.
+   ========================================================================== */
+
 *,
 *::before,
 *::after {
@@ -6,250 +13,201 @@
   padding: 0;
 }
 
-/* ---- Theme variables ---- */
 :root {
-  --color-bg: #13171e;
-  --color-surface: #1c2128;
-  --color-primary: #0d1117;
-  --color-accent: #58a6ff;
-  --color-accent-hover: #79b8ff;
-  --color-text: #e6edf3;
-  --color-text-light: #8b949e;
-  --color-border: #30363d;
-  --color-shadow: rgba(0, 0, 0, 0.4);
-  --radius: 8px;
+  /* Surfaces, from furthest back to deepest recess */
+  --color-bg: #1a1f23;
+  --color-surface: #212930;
+  --color-recess: #12171a;
+  --color-primary: #12171a;
+
+  /* Edges */
+  --color-border: #323c44;
+  --color-border-soft: #262f36;
+
+  /* Type */
+  --color-text: #dde4e8;
+  --color-text-light: #8695a0;
+
+  /* Instrument amber — the one saturated colour in the panel */
+  --color-accent: #e3a13c;
+  --color-accent-hover: #efb257;
+  --color-accent-wash: rgba(227, 161, 60, 0.13);
+  --color-accent-ink: #12171a;
+
+  --color-shadow: rgba(0, 0, 0, 0.45);
+
+  /* Geometry: two radii only — controls and panels */
+  --radius: 4px;
+  --radius-sm: 3px;
+
+  /* Type stacks */
+  --font-sans: "Archivo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Chivo Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
 
   /* Code blocks */
-  --color-code-bg: #161b22;
-  --color-code-inline: #f0883e;
+  --color-code-bg: #12171a;
+  --color-code-inline: #e3a13c;
 
-  /* Diff */
-  --color-diff-added-bg: #0f2d1a;
-  --color-diff-added-num: #133a1f;
-  --color-diff-added-text: #3fb950;
-  --color-diff-added-char: rgba(63, 185, 100, 0.4);
-  --color-diff-removed-bg: #3d1214;
-  --color-diff-removed-num: #4d1519;
-  --color-diff-removed-text: #f85149;
-  --color-diff-removed-char: rgba(248, 81, 73, 0.4);
-  --color-diff-empty: #161b22;
+  /* Diff — teal reads as added, rose as removed, in both themes */
+  --color-diff-added-bg: rgba(79, 179, 166, 0.14);
+  --color-diff-added-num: rgba(79, 179, 166, 0.24);
+  --color-diff-added-text: #4fb3a6;
+  --color-diff-added-char: rgba(79, 179, 166, 0.42);
+  --color-diff-removed-bg: rgba(217, 106, 106, 0.14);
+  --color-diff-removed-num: rgba(217, 106, 106, 0.24);
+  --color-diff-removed-text: #d96a6a;
+  --color-diff-removed-char: rgba(217, 106, 106, 0.42);
+  --color-diff-empty: #171c20;
 
   /* JSON syntax */
-  --color-json-key: #ffb074;
-  --color-json-string: #a5d6ff;
-  --color-json-number: #79c0ff;
-  --color-json-bool: #f85149;
-  --color-json-null: #8b949e;
+  --color-json-key: #e3a13c;
+  --color-json-string: #7fc4b9;
+  --color-json-number: #8fb8d8;
+  --color-json-bool: #d96a6a;
+  --color-json-null: #8695a0;
 
   /* JWT panels */
-  --color-jwt-header-bg: #1e3a5f;
-  --color-jwt-header-text: #79b8ff;
-  --color-jwt-payload-bg: #2d1b69;
-  --color-jwt-payload-text: #b392f0;
-  --color-jwt-signature-bg: #5c1a3e;
-  --color-jwt-signature-text: #f097b2;
+  --color-jwt-header-bg: rgba(143, 184, 216, 0.12);
+  --color-jwt-header-text: #8fb8d8;
+  --color-jwt-payload-bg: rgba(227, 161, 60, 0.12);
+  --color-jwt-payload-text: #e3a13c;
+  --color-jwt-signature-bg: rgba(79, 179, 166, 0.12);
+  --color-jwt-signature-text: #4fb3a6;
 
   /* Status */
-  --color-error: #f85149;
-  --color-success: #3fb950;
-  --color-success-bg: #0f2d1a;
-  --color-error-bg: #3d1214;
+  --color-error: #d96a6a;
+  --color-error-bg: rgba(217, 106, 106, 0.12);
+  --color-success: #4fb3a6;
+  --color-success-bg: rgba(79, 179, 166, 0.12);
 }
 
 [data-theme="light"] {
-  --color-bg: #f0f2f5;
-  --color-surface: #ffffff;
-  --color-primary: #1c2128;
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-text: #1f2937;
-  --color-text-light: #6b7280;
-  --color-border: #d1d5db;
-  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-bg: #dfe3e5;
+  --color-surface: #edf0f1;
+  --color-recess: #f7f9f9;
+  --color-primary: #eef1f2;
 
-  /* Code blocks */
-  --color-code-bg: #f6f8fa;
-  --color-code-inline: #d35400;
+  --color-border: #b3bdc3;
+  --color-border-soft: #c9d1d5;
 
-  /* Diff */
-  --color-diff-added-bg: #dafbe1;
-  --color-diff-added-num: #c6f2cf;
-  --color-diff-added-text: #116329;
-  --color-diff-added-char: rgba(17, 99, 41, 0.25);
-  --color-diff-removed-bg: #ffebe9;
-  --color-diff-removed-num: #ffd7d5;
-  --color-diff-removed-text: #82071e;
-  --color-diff-removed-char: rgba(130, 7, 30, 0.25);
-  --color-diff-empty: #f6f8fa;
+  --color-text: #1d252a;
+  --color-text-light: #57646b;
 
-  /* JSON syntax */
-  --color-json-key: #953800;
-  --color-json-string: #0550ae;
-  --color-json-number: #0550ae;
-  --color-json-bool: #cf222e;
-  --color-json-null: #6e7781;
+  --color-accent: #a9690a;
+  --color-accent-hover: #8d5606;
+  --color-accent-wash: rgba(169, 105, 10, 0.12);
+  --color-accent-ink: #ffffff;
 
-  /* JWT panels */
-  --color-jwt-header-bg: #dbeafe;
-  --color-jwt-header-text: #1e40af;
-  --color-jwt-payload-bg: #ede9fe;
-  --color-jwt-payload-text: #5b21b6;
-  --color-jwt-signature-bg: #fce7f3;
-  --color-jwt-signature-text: #9d174d;
+  --color-shadow: rgba(29, 37, 42, 0.14);
 
-  /* Status */
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-  --color-success-bg: #dcfce7;
-  --color-error-bg: #fef2f2;
+  --color-code-bg: #f7f9f9;
+  --color-code-inline: #a9690a;
+
+  --color-diff-added-bg: rgba(25, 114, 106, 0.12);
+  --color-diff-added-num: rgba(25, 114, 106, 0.2);
+  --color-diff-added-text: #14625b;
+  --color-diff-added-char: rgba(25, 114, 106, 0.3);
+  --color-diff-removed-bg: rgba(174, 59, 59, 0.11);
+  --color-diff-removed-num: rgba(174, 59, 59, 0.19);
+  --color-diff-removed-text: #9c3333;
+  --color-diff-removed-char: rgba(174, 59, 59, 0.28);
+  --color-diff-empty: #e7eaec;
+
+  --color-json-key: #a9690a;
+  --color-json-string: #14625b;
+  --color-json-number: #1f5b82;
+  --color-json-bool: #9c3333;
+  --color-json-null: #57646b;
+
+  --color-jwt-header-bg: rgba(31, 91, 130, 0.1);
+  --color-jwt-header-text: #1f5b82;
+  --color-jwt-payload-bg: rgba(169, 105, 10, 0.1);
+  --color-jwt-payload-text: #8d5606;
+  --color-jwt-signature-bg: rgba(25, 114, 106, 0.1);
+  --color-jwt-signature-text: #14625b;
+
+  --color-error: #9c3333;
+  --color-error-bg: rgba(174, 59, 59, 0.1);
+  --color-success: #14625b;
+  --color-success-bg: rgba(25, 114, 106, 0.1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
   background: var(--color-bg);
   color: var(--color-text);
-  line-height: 1.6;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---- Header ---- */
+::selection {
+  background: var(--color-accent-wash);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Top rail
+   ========================================================================== */
+
 header {
-  background: var(--color-primary);
-  color: white;
-  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 1.1rem;
+  padding: 0.6rem 1.6rem;
+  background: var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 header a {
-  color: white;
+  color: var(--color-text);
   text-decoration: none;
 }
 
 header .site-title {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 header .back-link {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  opacity: 0.7;
-  transition: opacity 0.15s;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+  transition: color 0.15s;
 }
 
 header .back-link:hover {
-  opacity: 1;
+  color: var(--color-text);
 }
 
 header .back-link svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.header-spacer {
-  flex: 1;
-}
-
-/* Theme toggle */
-.theme-toggle {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  padding: 5px 7px;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  line-height: 1;
-}
-
-.theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: white;
-}
-
-.theme-toggle svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* ---- Main ---- */
-main {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-}
-
-h1 {
-  margin-bottom: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-/* ---- Page title bar with share button ---- */
-.page-title-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.page-title-bar h1 {
-  margin-bottom: 0;
-}
-
-/* ---- Input wrapper with clear icon ---- */
-.input-wrap {
-  position: relative;
-}
-
-.input-wrap textarea {
-  padding-right: 2.5rem;
-}
-
-.clear-icon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--color-text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-  line-height: 1;
-}
-
-.clear-icon:hover {
-  color: var(--color-error);
-  border-color: var(--color-error);
-  background: var(--color-bg);
-}
-
-.clear-icon svg {
   width: 14px;
   height: 14px;
   fill: none;
@@ -259,7 +217,215 @@ h1 {
   stroke-linejoin: round;
 }
 
-/* ---- Home page tool grid ---- */
+/* Status readout in the rail — states a fact about the tool, not a slogan */
+.rail-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--color-text-light);
+}
+
+.rail-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+  flex: none;
+}
+
+@media (max-width: 620px) {
+  .rail-status { display: none; }
+  header { padding: 0.6rem 1rem; }
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.theme-toggle {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 7px;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+  line-height: 1;
+}
+
+.theme-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-light);
+  background: var(--color-surface);
+}
+
+.theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Bare mark, no control chrome — the GitHub glyph is filled, unlike the
+   stroked icons beside it */
+.rail-link {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-light);
+  transition: color 0.15s;
+}
+
+.rail-link:hover { color: var(--color-text); }
+
+.rail-link svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  stroke: none;
+}
+
+/* ==========================================================================
+   Main column
+   ========================================================================== */
+
+main {
+  width: 100%;
+  max-width: 70rem;
+  margin: 0 auto;
+  padding: 2.4rem 1.6rem 3rem;
+  flex: 1;
+}
+
+main.narrow { max-width: 54rem; }
+main.wide { max-width: 82rem; }
+
+h1 {
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* ==========================================================================
+   Home — hero, tick scale, switchboard
+   ========================================================================== */
+
+.hero {
+  padding-bottom: 1rem;
+}
+
+.hero h1 {
+  font-size: clamp(1.8rem, 4.6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  max-width: 20ch;
+  margin-bottom: 0.9rem;
+}
+
+.hero p {
+  color: var(--color-text-light);
+  max-width: 58ch;
+  font-size: 0.96rem;
+}
+
+/* A measuring scale: 13 lit ticks, one per tool */
+.ticks {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+  margin-top: 2rem;
+}
+
+.ticks i {
+  display: block;
+  width: 2px;
+  height: 8px;
+  background: var(--color-border);
+}
+
+.ticks i.on {
+  height: 22px;
+  background: var(--color-accent);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--color-border);
+  margin-top: 2.6rem;
+}
+
+.board .col {
+  border-right: 1px solid var(--color-border-soft);
+  padding: 1.1rem 1.1rem 1.4rem;
+}
+
+.board .col:last-child { border-right: 0; }
+
+.board .col h2 {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.74rem;
+  color: var(--color-text-light);
+  margin-bottom: 0.9rem;
+}
+
+.sw {
+  display: block;
+  text-decoration: none;
+  color: var(--color-text);
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.sw .k { font-weight: 500; transition: color 0.12s; }
+
+.sw small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  line-height: 1.45;
+  margin-top: 0.1rem;
+}
+
+.sw:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.sw:hover .k { color: var(--color-accent); }
+
+@media (max-width: 860px) {
+  .board { grid-template-columns: repeat(2, 1fr); }
+  .board .col { border-bottom: 1px solid var(--color-border-soft); }
+}
+
+@media (max-width: 520px) {
+  .board { grid-template-columns: 1fr; }
+  .board .col { border-right: 0; }
+}
+
+/* Legacy card grid — kept so any page still using it stays coherent */
 .tool-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -271,111 +437,163 @@ h1 {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
+  padding: 1.1rem 1.25rem;
   text-decoration: none;
   color: var(--color-text);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: border-color 0.15s;
 }
 
-.tool-card:hover {
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 16px var(--color-shadow);
-  transform: translateY(-1px);
+.tool-card:hover { border-color: var(--color-accent); }
+.tool-card h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+.tool-card p { font-size: 0.8rem; color: var(--color-text-light); line-height: 1.5; }
+
+/* ==========================================================================
+   Tool page head
+   ========================================================================== */
+
+.page-title-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.3rem;
 }
 
-.tool-card h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-  color: var(--color-accent);
-  letter-spacing: -0.01em;
-}
+.page-title-bar h1 { margin-bottom: 0; }
 
-.tool-card p {
-  font-size: 0.85rem;
+/* The share control sits at the far right, whatever else is in the bar */
+.page-title-bar .btn-clear { margin-left: auto; }
+
+/* One-line statement of what the tool does, set beside the title */
+.page-note {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
   color: var(--color-text-light);
-  line-height: 1.5;
 }
 
-/* ---- Tool page shared styles ---- */
+#share-timestamp {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--color-text-light);
+}
+
+/* ==========================================================================
+   Panels and fields
+   ========================================================================== */
+
 .tool-container {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* A bordered instrument panel, used where a tool needs a framed group */
+.panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: 1.1rem 1.2rem;
+}
+
+label {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.73rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text-light);
+  margin-bottom: 0.3rem;
 }
 
 textarea {
   width: 100%;
   min-height: 150px;
-  padding: 0.75rem;
+  padding: 0.55rem 0.7rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.83rem;
+  line-height: 1.7;
   resize: vertical;
   margin-bottom: 1rem;
-  background: var(--color-bg);
+  background: var(--color-recess);
   color: var(--color-text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+textarea::placeholder,
+input::placeholder { color: var(--color-text-light); opacity: 0.7; }
+
 textarea:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
-}
-
-[data-theme="light"] textarea:focus {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 2px var(--color-accent-wash);
 }
 
 input[type="text"],
 input[type="number"],
+input[type="date"],
 select {
-  background: var(--color-bg);
+  background: var(--color-recess);
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 0.35rem 0.55rem;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus,
+input[type="date"]:focus,
 select:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  box-shadow: 0 0 0 2px var(--color-accent-wash);
 }
 
-[data-theme="light"] input[type="text"]:focus,
-[data-theme="light"] input[type="number"]:focus,
-[data-theme="light"] select:focus {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+input[type="checkbox"] { accent-color: var(--color-accent); }
+
+/* Two fields side by side — the shape most compare tools need */
+.dual-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
 }
 
-.output-area pre {
-  color: var(--color-text);
+/* The grid owns the spacing below itself, so a textarea inside it must not
+   add its own on top */
+.dual-input textarea { margin-bottom: 0; }
+
+.dual-input input[type="text"] { width: 100%; }
+
+@media (max-width: 640px) {
+  .dual-input { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Controls
+   ========================================================================== */
 
 button {
-  background: var(--color-accent);
-  color: white;
-  border: none;
-  padding: 0.5rem 1.1rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  padding: 0.34rem 1rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 button:hover {
   background: var(--color-accent-hover);
-}
-
-button:active {
-  transform: scale(0.97);
+  border-color: var(--color-accent-hover);
 }
 
 .btn-row {
@@ -385,58 +603,169 @@ button:active {
   margin-bottom: 1rem;
 }
 
-label {
-  display: block;
-  font-weight: 600;
+/* An option sitting inline with the controls: a checkbox or small field
+   plus its own text. Overrides the block/mono treatment of a bare label. */
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
   font-size: 0.85rem;
-  margin-bottom: 0.35rem;
+  color: var(--color-text);
+  margin-bottom: 0;
+}
+
+/* Quiet controls: the secondary action, and peer/preset choices where no
+   single button is "the" action. Amber is reserved for the button that runs
+   the tool, so a page never shows more than one of them. */
+.btn-clear,
+.btn-quiet {
+  background: var(--color-surface);
   color: var(--color-text-light);
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  padding: 0.34rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.output-area {
-  margin-top: 1rem;
+.btn-clear:hover,
+.btn-quiet:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-text-light);
 }
 
-.output-area pre {
-  background: var(--color-bg);
+/* ==========================================================================
+   Gauges and readouts — numeric output, not prose
+   ========================================================================== */
+
+.gauges {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.gauge {
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  min-width: 6.5rem;
+}
+
+.gauge .n {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge .l { font-size: 0.73rem; color: var(--color-text-light); }
+.gauge.add .n { color: var(--color-diff-added-text); }
+.gauge.del .n { color: var(--color-diff-removed-text); }
+
+.readout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.7rem;
+}
+
+/* Two or three cells shouldn't stretch across the full column */
+.readout.tight {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 13rem));
+  justify-content: start;
+}
+
+.readout .cell {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.85rem;
+}
+
+.readout .n {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.readout .l { font-size: 0.73rem; color: var(--color-text-light); }
+
+.readout .bar {
+  display: block;
+  height: 3px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.readout .bar i {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+}
+
+/* ==========================================================================
+   Output
+   ========================================================================== */
+
+.output-area { margin-top: 1.2rem; }
+
+.output-area pre {
+  background: var(--color-recess);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.83rem;
+  line-height: 1.7;
   min-height: 80px;
+  color: var(--color-text);
 }
 
-/* ---- Copy icon ---- */
-.output-wrap {
-  position: relative;
-}
+.output-wrap { position: relative; }
 
-.copy-icon {
+.input-wrap { position: relative; }
+.input-wrap textarea { padding-right: 2.5rem; }
+
+.copy-icon,
+.clear-icon {
   position: absolute;
   top: 8px;
   right: 8px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 5px;
   cursor: pointer;
   color: var(--color-text-light);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   line-height: 1;
 }
 
-.copy-icon:hover {
+.copy-icon:hover,
+.clear-icon:hover {
+  background: var(--color-surface);
   color: var(--color-text);
   border-color: var(--color-text-light);
-  background: var(--color-bg);
+}
+
+.clear-icon:hover {
+  color: var(--color-error);
+  border-color: var(--color-error);
 }
 
 .copy-icon.copied {
@@ -444,9 +773,10 @@ label {
   border-color: var(--color-success);
 }
 
-.copy-icon svg {
-  width: 15px;
-  height: 15px;
+.copy-icon svg,
+.clear-icon svg {
+  width: 14px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -454,32 +784,21 @@ label {
   stroke-linejoin: round;
 }
 
-/* ---- Clear / secondary button ---- */
-.btn-clear {
-  background: transparent;
-  color: var(--color-text-light);
-  border: 1px solid var(--color-border);
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
+/* ==========================================================================
+   Toast
+   ========================================================================== */
 
-.btn-clear:hover {
-  color: var(--color-text);
-  border-color: var(--color-text-light);
-  background: transparent;
-}
-
-/* ---- Toast ---- */
 .toast {
   position: fixed;
   top: 1rem;
   right: 1rem;
-  transform: translateX(20px);
+  transform: translateY(-6px);
   background: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-accent);
   border-radius: var(--radius);
-  padding: 0.55rem 1.1rem;
+  padding: 0.5rem 1rem;
   font-size: 0.85rem;
   opacity: 0;
   pointer-events: none;
@@ -490,115 +809,157 @@ label {
 
 .toast.show {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
-/* ---- Footer ---- */
-footer {
-  text-align: center;
-  padding: 2rem 1rem 1.5rem;
-  font-size: 0.75rem;
-  color: var(--color-text-light);
-  letter-spacing: 0.02em;
-}
+/* ==========================================================================
+   Status messages
+   ========================================================================== */
 
-/* ---- Shared status colors ---- */
 .error-msg {
   color: var(--color-error);
-  font-weight: 600;
-  margin-top: 0.5rem;
+  background: var(--color-error-bg);
+  border-left: 2px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
 }
+
+.error-msg:empty { display: none; }
 
 .match-msg {
   color: var(--color-success);
-  font-weight: 600;
-  margin-top: 0.5rem;
+  background: var(--color-success-bg);
+  border-left: 2px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
 }
 
-/* ---- Shared diff styles ---- */
+.match-msg:empty { display: none; }
+
+/* ==========================================================================
+   Diff panes
+   ========================================================================== */
+
+.diff-summary {
+  margin-bottom: 0.7rem;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.diff-stat-added { color: var(--color-diff-added-text); }
+.diff-stat-removed { color: var(--color-diff-removed-text); }
+
 .diff-view {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  overflow: auto;
+  overflow: hidden;
+  background: var(--color-recess);
   margin-top: 0.5rem;
 }
 
-.diff-side {
-  overflow: auto;
-}
-
-.diff-side:first-child {
-  border-right: 2px solid var(--color-border);
-}
+.diff-side { overflow: auto; }
+.diff-side:first-child { border-right: 1px solid var(--color-border); }
 
 .diff-side-header {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 6px 10px;
-  background: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  padding: 0.35rem 0.8rem;
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-light);
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
 }
 
 .diff-line {
   display: flex;
   white-space: pre;
-  line-height: 1.5;
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  font-size: 0.85rem;
-  min-height: 1.5em;
+  line-height: 1.8;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  min-height: 1.8em;
 }
 
 .diff-line-num {
-  width: 36px;
-  min-width: 36px;
+  width: 2.6rem;
+  min-width: 2.6rem;
   text-align: right;
-  padding: 0 6px 0 4px;
+  padding: 0 0.6rem 0 0.3rem;
   color: var(--color-text-light);
+  opacity: 0.55;
   user-select: none;
-  border-right: 1px solid var(--color-border);
 }
 
 .diff-line-content {
-  padding: 0 8px;
+  padding: 0 0.8rem;
   flex: 1;
 }
 
 .diff-line.added { background: var(--color-diff-added-bg); }
-.diff-line.added .diff-line-num { background: var(--color-diff-added-num); color: var(--color-diff-added-text); }
-.diff-line.added .diff-line-content { color: var(--color-diff-added-text); }
+.diff-line.added .diff-line-num { background: var(--color-diff-added-num); color: var(--color-diff-added-text); opacity: 1; }
+.diff-line.added .diff-line-content { color: var(--color-text); }
 
 .diff-line.removed { background: var(--color-diff-removed-bg); }
-.diff-line.removed .diff-line-num { background: var(--color-diff-removed-num); color: var(--color-diff-removed-text); }
-.diff-line.removed .diff-line-content { color: var(--color-diff-removed-text); }
+.diff-line.removed .diff-line-num { background: var(--color-diff-removed-num); color: var(--color-diff-removed-text); opacity: 1; }
+.diff-line.removed .diff-line-content { color: var(--color-text); }
 
-.diff-line.empty { background: var(--color-diff-empty); }
+.diff-line.empty { background: var(--color-diff-empty); opacity: 0.4; }
 .diff-line.empty .diff-line-num { background: var(--color-diff-empty); }
 
-.diff-line.unchanged { background: var(--color-surface); }
+.diff-line.unchanged { background: transparent; }
 
-.diff-summary { margin-bottom: 0.5rem; }
-.diff-stat-added { color: var(--color-diff-added-text); }
-.diff-stat-removed { color: var(--color-diff-removed-text); }
-
-/* Intra-line char highlights inside a paired removed/added line */
 .diff-char-removed {
   background: var(--color-diff-removed-char);
   border-radius: 2px;
-  font-weight: 600;
 }
+
 .diff-char-added {
   background: var(--color-diff-added-char);
   border-radius: 2px;
-  font-weight: 600;
 }
 
-/* ---- Shared JSON syntax colors ---- */
+@media (max-width: 640px) {
+  .diff-view { grid-template-columns: 1fr; }
+  .diff-side:first-child { border-right: 0; border-bottom: 1px solid var(--color-border); }
+}
+
+/* ==========================================================================
+   JSON syntax
+   ========================================================================== */
+
 .json-key { color: var(--color-json-key); }
 .json-string { color: var(--color-json-string); }
 .json-number { color: var(--color-json-number); }
 .json-bool { color: var(--color-json-bool); }
 .json-null { color: var(--color-json-null); }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+/* Footer tracks whatever width the page's main column uses */
+main.wide ~ footer { max-width: 82rem; }
+main.narrow ~ footer { max-width: 54rem; }
+
+footer {
+  max-width: 70rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem 1.6rem 1.6rem;
+  border-top: 1px solid var(--color-border-soft);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--color-text-light);
+}
