@@ -179,7 +179,9 @@
     }
 
     function renderLine(type, num, value, isHtml, side) {
-      return '<div class="diff-line ' + type + ' ' + side + '">'
+      // isHtml means the line carries char-level marks, so it opts out of the
+      // whole-row tint and lets the marks alone carry the change.
+      return '<div class="diff-line ' + type + ' ' + side + (isHtml ? ' charwise' : '') + '">'
         + '<span class="diff-line-num">' + num + '</span>'
         + '<span class="diff-line-content">' + (isHtml ? value : escapeHtml(value)) + '</span>'
         + '</div>';

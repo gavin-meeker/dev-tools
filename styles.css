@@ -915,6 +915,8 @@ button:hover {
 .diff-line.removed .diff-line-num { background: var(--color-diff-removed-num); color: var(--color-diff-removed-text); opacity: 1; }
 .diff-line.removed .diff-line-content { color: var(--color-text); }
 
+.diff-line.charwise { background: transparent; }
+
 .diff-line.empty { background: var(--color-diff-empty); }
 .diff-line.empty .diff-line-num { background: var(--color-diff-empty); }
 
