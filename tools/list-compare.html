@@ -264,8 +264,6 @@
       }
       document.getElementById('add-list').disabled = listCount >= MAX_LISTS;
       document.querySelectorAll('.lc-pane-remove').forEach((btn, i) => {
-        // Removed from layout, not just hidden, so the name input stays flush
-        // with the textarea below it when the button isn't available.
         btn.hidden = !(listCount > 2 && i < listCount);
       });
       localStorage.setItem(COUNT_KEY, String(listCount));
