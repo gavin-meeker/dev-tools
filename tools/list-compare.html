@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <title>List Compare - Dev Tools</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .lc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 700px) {
+      .lc-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+    .lc-pane[hidden] { display: none; }
+    .lc-pane textarea { margin-bottom: 0; }
+    .lc-pane-head {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.35rem;
+    }
+    .lc-pane-head input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .lc-pane-remove {
+      background: none;
+      color: var(--color-text-light);
+      padding: 0.25rem;
+      line-height: 0;
+      border-radius: 4px;
+    }
+    .lc-pane-remove:hover { background: none; color: var(--color-error); }
+    .lc-pane-remove svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    .lc-inputs.collapsed .lc-grid,
+    .lc-inputs.collapsed .lc-add-row { display: none; }
+
+    .lc-summary {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .lc-summary-list { color: var(--color-text); }
+    .lc-summary-name { font-weight: 600; }
+    .lc-summary-note { color: var(--color-text-light); }
+    .lc-summary-totals {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text-light);
+    }
+    .lc-summary-totals strong { color: var(--color-text); }
+
+    .lc-table-wrap {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: auto;
+      max-height: 70vh;
+    }
+    .lc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+    .lc-table th, .lc-table td {
+      padding: 4px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .lc-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--color-bg);
+      color: var(--color-text-light);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      z-index: 1;
+    }
+    .lc-col-mark { width: 1%; white-space: nowrap; text-align: center !important; }
+    .lc-mark { color: var(--color-success); font-weight: 700; }
+    .lc-item { word-break: break-all; }
+
+    .lc-section-row td {
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      padding: 0;
+    }
+    .lc-section {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 8px 10px;
+      font-family: inherit;
+    }
+    .lc-section-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--color-text);
+    }
+    .lc-section-count { color: var(--color-text-light); font-size: 0.85rem; }
+    .lc-section-copy {
+      margin-left: auto;
+      background: none;
+      color: var(--color-text-light);
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+    }
+    .lc-section-copy:hover { background: var(--color-bg); color: var(--color-accent); }
+
+    #add-list:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    #add-list:disabled:hover { background: var(--color-accent); }
+
+    .lc-placeholder {
+      color: var(--color-text-light);
+      font-size: 0.9rem;
+      padding: 2rem 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <span class="header-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
+  </header>
+
+  <main>
+    <div class="page-title-bar">
+      <h1>List Compare</h1>
+      <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+    </div>
+    <div class="tool-container">
+      <div class="lc-inputs" id="inputs">
+        <div class="lc-grid" id="list-grid">
+          <!-- All five panes exist up front so shared.js (share links) and autosave.js,
+               which both bind to elements present at load, cover every list. Panes past
+               the active count are hidden, not absent. -->
+          <div class="lc-pane" id="pane-0">
+            <div class="lc-pane-head">
+              <input type="text" id="name-a" value="List A" aria-label="Name for list 1">
+              <button class="lc-pane-remove" onclick="removeList(0)" title="Remove list"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <textarea id="list-a" placeholder="One item per line..."></textarea>
+          </div>
+          <div class="lc-pane" id="pane-1">
+            <div class="lc-pane-head">
+              <input type="text" id="name-b" value="List B" aria-label="Name for list 2">
+              <button class="lc-pane-remove" onclick="removeList(1)" title="Remove list"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <textarea id="list-b" placeholder="One item per line..."></textarea>
+          </div>
+          <div class="lc-pane" id="pane-2" hidden>
+            <div class="lc-pane-head">
+              <input type="text" id="name-c" value="List C" aria-label="Name for list 3">
+              <button class="lc-pane-remove" onclick="removeList(2)" title="Remove list"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <textarea id="list-c" placeholder="One item per line..."></textarea>
+          </div>
+          <div class="lc-pane" id="pane-3" hidden>
+            <div class="lc-pane-head">
+              <input type="text" id="name-d" value="List D" aria-label="Name for list 4">
+              <button class="lc-pane-remove" onclick="removeList(3)" title="Remove list"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <textarea id="list-d" placeholder="One item per line..."></textarea>
+          </div>
+          <div class="lc-pane" id="pane-4" hidden>
+            <div class="lc-pane-head">
+              <input type="text" id="name-e" value="List E" aria-label="Name for list 5">
+              <button class="lc-pane-remove" onclick="removeList(4)" title="Remove list"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <textarea id="list-e" placeholder="One item per line..."></textarea>
+          </div>
+        </div>
+        <div class="btn-row lc-add-row">
+          <button id="add-list" onclick="addList()">+ Add list</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button onclick="compare()">Compare</button>
+        <button id="toggle-inputs" onclick="toggleInputs()">Hide inputs</button>
+        <button onclick="clearAll()">Clear</button>
+        <label style="font-weight: normal; text-transform: none; display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0;">
+          <input type="checkbox" id="case-insensitive"> Ignore case
+        </label>
+      </div>
+
+      <div id="summary"></div>
+      <div id="results"></div>
+      <div class="lc-placeholder" id="placeholder">Paste your lists and hit Compare</div>
+      <div class="btn-row" id="export-row" style="margin-top: 1rem;" hidden>
+        <button onclick="copyTsv()">Copy table (TSV)</button>
+      </div>
+    </div>
+  </main>
+<footer>Made by Gavin Meeker</footer>
+
+  <script>
+    const MAX_LISTS = 5;
+    const SUFFIXES = ['a', 'b', 'c', 'd', 'e'];
+    const COUNT_KEY = 'devtools:' + location.pathname + ':list-count';
+
+    let listCount = 2;
+    let lastSections = null;
+    let lastLists = null;
+
+    const defaultName = (i) => 'List ' + SUFFIXES[i].toUpperCase();
+    const nameEl = (i) => document.getElementById('name-' + SUFFIXES[i]);
+    const textEl = (i) => document.getElementById('list-' + SUFFIXES[i]);
+
+    // ---- List panes ----
+
+    function setListCount(n) {
+      listCount = Math.min(MAX_LISTS, Math.max(2, n));
+      for (let i = 0; i < MAX_LISTS; i++) {
+        document.getElementById('pane-' + i).hidden = i >= listCount;
+      }
+      document.getElementById('add-list').disabled = listCount >= MAX_LISTS;
+      document.querySelectorAll('.lc-pane-remove').forEach((btn, i) => {
+        btn.style.visibility = listCount > 2 && i < listCount ? 'visible' : 'hidden';
+      });
+      localStorage.setItem(COUNT_KEY, String(listCount));
+      clearResults();
+    }
+
+    function addList() {
+      if (listCount < MAX_LISTS) setListCount(listCount + 1);
+    }
+
+    // Shifts the panes after `index` up so ids stay tied to position; default names
+    // follow the slot they land in rather than the one they were typed against.
+    function removeList(index) {
+      if (listCount <= 2) return;
+      const kept = [];
+      for (let i = 0; i < listCount; i++) {
+        if (i !== index) kept.push({ name: nameEl(i).value, text: textEl(i).value, from: i });
+      }
+      kept.forEach((entry, i) => {
+        setValue(nameEl(i), entry.name === defaultName(entry.from) ? defaultName(i) : entry.name);
+        setValue(textEl(i), entry.text);
+      });
+      setValue(nameEl(listCount - 1), defaultName(listCount - 1));
+      setValue(textEl(listCount - 1), '');
+      setListCount(listCount - 1);
+    }
+
+    function setValue(el, value) {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function toggleInputs() {
+      const collapsed = document.getElementById('inputs').classList.toggle('collapsed');
+      document.getElementById('toggle-inputs').textContent = collapsed ? 'Show inputs' : 'Hide inputs';
+    }
+
+    function clearAll() {
+      clearTool();
+      for (let i = 0; i < MAX_LISTS; i++) setValue(nameEl(i), defaultName(i));
+      clearResults();
+    }
+
+    function clearResults() {
+      lastSections = null;
+      lastLists = null;
+      document.getElementById('summary').innerHTML = '';
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('export-row').hidden = true;
+      document.getElementById('placeholder').hidden = false;
+    }
+
+    // ---- Comparison ----
+
+    function compare() {
+      const ignoreCase = document.getElementById('case-insensitive').checked;
+      const lists = [];
+      for (let i = 0; i < listCount; i++) {
+        const lines = textEl(i).value.split('\n').map(l => l.trim()).filter(l => l !== '');
+        lists.push({
+          name: nameEl(i).value.trim() || defaultName(i),
+          lines: lines,
+          lineCount: lines.length,
+          unique: 0,
+          only: 0
+        });
+      }
+
+      // key -> { display, mask, variants } where mask bit i means "present in list i"
+      const items = new Map();
+      lists.forEach((list, i) => {
+        const seen = new Set();
+        list.lines.forEach(line => {
+          const key = ignoreCase ? line.toLowerCase() : line;
+          if (seen.has(key)) return;
+          seen.add(key);
+          list.unique++;
+          let item = items.get(key);
+          if (!item) {
+            item = { display: line, mask: 0, variants: new Set() };
+            items.set(key, item);
+          }
+          item.mask |= 1 << i;
+          item.variants.add(line);
+        });
+      });
+
+      const rows = Array.from(items.values());
+      rows.forEach(row => {
+        const onlyIn = onlyListIndex(row.mask);
+        if (onlyIn >= 0) lists[onlyIn].only++;
+      });
+      rows.sort((a, b) => {
+        const x = a.display.toLowerCase(), y = b.display.toLowerCase();
+        return x < y ? -1 : x > y ? 1 : 0;
+      });
+
+      const allMask = (1 << listCount) - 1;
+      const sections = [{ title: 'In all ' + listCount + ' lists', rows: rows.filter(r => r.mask === allMask) }];
+      lists.forEach((list, i) => {
+        sections.push({ title: 'Only in ' + list.name, rows: rows.filter(r => r.mask === (1 << i)) });
+      });
+      sections.push({
+        title: 'In some lists',
+        rows: rows.filter(r => r.mask !== allMask && onlyListIndex(r.mask) < 0)
+      });
+
+      lastLists = lists;
+      lastSections = sections;
+      renderSummary(lists, rows.length, sections[0].rows.length);
+      renderTable(lists, sections);
+      document.getElementById('placeholder').hidden = true;
+      document.getElementById('export-row').hidden = false;
+    }
+
+    // Returns the single list index when `mask` has exactly one bit set, else -1.
+    function onlyListIndex(mask) {
+      return (mask & (mask - 1)) === 0 ? Math.log2(mask) : -1;
+    }
+
+    function renderSummary(lists, totalDistinct, inAll) {
+      const lines = lists.map(list => {
+        const dupes = list.lineCount - list.unique;
+        const note = dupes > 0 ? ' <span class="lc-summary-note">(' + dupes + ' duplicate' + (dupes === 1 ? '' : 's') + ' ignored)</span>' : '';
+        return '<div class="lc-summary-list"><span class="lc-summary-name">' + esc(list.name) + '</span> &mdash; ' +
+          list.lineCount + ' line' + (list.lineCount === 1 ? '' : 's') + ', ' +
+          list.unique + ' unique value' + (list.unique === 1 ? '' : 's') + ', ' +
+          list.only + ' only here' + note + '</div>';
+      });
+      lines.push('<div class="lc-summary-totals">In all ' + lists.length + ' lists: <strong>' + inAll +
+        '</strong> &nbsp;&middot;&nbsp; Total distinct: <strong>' + totalDistinct + '</strong></div>');
+      document.getElementById('summary').innerHTML = '<div class="lc-summary">' + lines.join('') + '</div>';
+    }
+
+    function renderTable(lists, sections) {
+      const cols = lists.length + 1;
+      let html = '<div class="lc-table-wrap"><table class="lc-table"><thead><tr><th>Item</th>';
+      lists.forEach(list => { html += '<th class="lc-col-mark">' + esc(list.name) + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      sections.forEach((section, si) => {
+        if (!section.rows.length) return;
+        html += '<tr class="lc-section-row"><td colspan="' + cols + '"><div class="lc-section">' +
+          '<span class="lc-section-title">' + esc(section.title) + '</span>' +
+          '<span class="lc-section-count">' + section.rows.length + '</span>' +
+          '<button class="lc-section-copy" onclick="copySection(' + si + ')">Copy</button>' +
+          '</div></td></tr>';
+        section.rows.forEach(row => {
+          const variants = Array.from(row.variants);
+          const title = variants.length > 1 ? ' title="Variants: ' + esc(variants.join(', ')) + '"' : '';
+          html += '<tr><td class="lc-item"' + title + '>' + esc(row.display) + '</td>';
+          for (let i = 0; i < lists.length; i++) {
+            html += '<td class="lc-col-mark">' + ((row.mask & (1 << i)) ? '<span class="lc-mark">&#10003;</span>' : '') + '</td>';
+          }
+          html += '</tr>';
+        });
+      });
+
+      html += '</tbody></table></div>';
+      document.getElementById('results').innerHTML = html;
+    }
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ---- Export ----
+
+    function copySection(index) {
+      if (!lastSections) return;
+      copyToClipboard(lastSections[index].rows.map(r => r.display).join('\n'));
+    }
+
+    function copyTsv() {
+      if (!lastSections) return;
+      const rows = [['Item'].concat(lastLists.map(l => l.name)).concat(['Group']).join('\t')];
+      lastSections.forEach(section => {
+        section.rows.forEach(row => {
+          const marks = lastLists.map((_, i) => (row.mask & (1 << i)) ? 'yes' : '');
+          rows.push([row.display].concat(marks).concat([section.title]).join('\t'));
+        });
+      });
+      copyToClipboard(rows.join('\n'));
+    }
+
+    // Both autosave and share-link restore dispatch `input`, so revealing a pane when
+    // content lands in it is enough to bring back lists C-E from either source.
+    for (let i = 2; i < MAX_LISTS; i++) {
+      textEl(i).addEventListener('input', function() {
+        if (this.value && i >= listCount) setListCount(i + 1);
+      });
+    }
+
+    setListCount(parseInt(localStorage.getItem(COUNT_KEY), 10) || 2);
+  </script>
+<script src="../shared.js"></script>
+  <script>
+    loadFromHash();
+  </script>
+<script src="../autosave.js"></script>
+</body>
+</html>
