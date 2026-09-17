@@ -210,11 +210,18 @@
       border-radius: var(--radius-sm);
     }
 
+    /* Tables ignore the prose measure and fill the pane; wide ones scroll
+       horizontally in their wrapper rather than crushing every column */
+    .preview-pane .table-scroll {
+      overflow-x: auto;
+      margin: 0.8em 0;
+    }
+
     .preview-pane table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 70ch;
-      margin: 0.8em 0;
+      max-width: none;
+      margin: 0;
       font-size: 0.9em;
     }
 
@@ -223,6 +230,9 @@
       border: 1px solid var(--color-border);
       padding: 0.4rem 0.75rem;
       text-align: left;
+      /* Undo the pane-wide break-anywhere so cells wrap at word boundaries */
+      overflow-wrap: normal;
+      word-break: normal;
     }
 
     .preview-pane th {
@@ -231,6 +241,7 @@
       font-weight: 400;
       color: var(--color-text-light);
       font-size: 0.85em;
+      white-space: nowrap;
     }
 
     .preview-pane .mermaid {
@@ -414,7 +425,11 @@ Write some **markdown** here..."></textarea>
       if (!window.marked) return _escapeHtml(md);
       var html = window.marked.parse(md);
       // Turn every soft line-break into a visible blank line
-      return html.replace(/<br\s*\/?>/g, '<br><br>');
+      html = html.replace(/<br\s*\/?>/g, '<br><br>');
+      // Give each table its own horizontal scroll container
+      return html.replace(/<table>[\s\S]*?<\/table>/g, function(t) {
+        return '<div class="table-scroll">' + t + '</div>';
+      });
     }
 
     // Initialize with sample content — only if there is no shared-link hash
