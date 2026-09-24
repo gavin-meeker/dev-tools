@@ -259,3 +259,47 @@ function loadFromHash() {
   promise.catch(function() {});
   return true;
 }
+
+// ---- Mermaid theme ----
+// Mermaid's own palettes don't match the site, so drive its base theme from the
+// same CSS variables the rest of the page uses. Pages pass this straight to
+// mermaid.initialize(); `fontFamily` may be overridden by the caller (an
+// explicit family is needed when the SVG is rasterized to PNG).
+function mermaidThemeConfig(overrides) {
+  var css = getComputedStyle(document.documentElement);
+  var v = function(name) { return css.getPropertyValue(name).trim(); };
+  var config = {
+    startOnLoad: false,
+    securityLevel: 'strict',
+    fontFamily: 'inherit',
+    theme: 'base',
+    themeVariables: {
+      background: v('--color-recess'),
+      primaryColor: v('--color-surface'),
+      primaryTextColor: v('--color-text'),
+      primaryBorderColor: v('--color-border'),
+      secondaryColor: v('--color-surface'),
+      tertiaryColor: v('--color-recess'),
+      mainBkg: v('--color-surface'),
+      nodeBorder: v('--color-accent'),
+      lineColor: v('--color-text-light'),
+      textColor: v('--color-text'),
+      titleColor: v('--color-text'),
+      clusterBkg: v('--color-recess'),
+      clusterBorder: v('--color-border-soft'),
+      edgeLabelBackground: v('--color-recess')
+    }
+  };
+  if (overrides) {
+    for (var k in overrides) config[k] = overrides[k];
+  }
+  return config;
+}
+
+// Run `cb` whenever the light/dark toggle flips, so mermaid can be re-themed.
+function onThemeChange(cb) {
+  new MutationObserver(cb).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+}

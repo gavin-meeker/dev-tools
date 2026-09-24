@@ -351,46 +351,17 @@ Write some **markdown** here..."></textarea>
       } catch (e) { /* mermaid renders errors inline */ }
     }
 
-    // Mermaid's own palettes don't match the site, so drive its base theme
-    // from the same CSS variables the rest of the page uses.
-    function mermaidConfig() {
-      var css = getComputedStyle(document.documentElement);
-      var v = function(name) { return css.getPropertyValue(name).trim(); };
-      return {
-        startOnLoad: false,
-        securityLevel: 'strict',
-        fontFamily: 'inherit',
-        theme: 'base',
-        themeVariables: {
-          background: v('--color-recess'),
-          primaryColor: v('--color-surface'),
-          primaryTextColor: v('--color-text'),
-          primaryBorderColor: v('--color-border'),
-          secondaryColor: v('--color-surface'),
-          tertiaryColor: v('--color-recess'),
-          mainBkg: v('--color-surface'),
-          nodeBorder: v('--color-accent'),
-          lineColor: v('--color-text-light'),
-          textColor: v('--color-text'),
-          titleColor: v('--color-text'),
-          clusterBkg: v('--color-recess'),
-          clusterBorder: v('--color-border-soft'),
-          edgeLabelBackground: v('--color-recess')
-        }
-      };
-    }
-
+    // Called from the mermaid script's onload, which is after shared.js has
+    // defined mermaidThemeConfig/onThemeChange.
     function initMermaid() {
-      window.mermaid.initialize(mermaidConfig());
+      window.mermaid.initialize(mermaidThemeConfig());
       runMermaid();
+      // Re-render mermaid diagrams when the theme toggles
+      onThemeChange(function() {
+        window.mermaid.initialize(mermaidThemeConfig());
+        render();
+      });
     }
-
-    // Re-render mermaid diagrams when the theme toggles
-    new MutationObserver(function() {
-      if (!window.mermaid) return;
-      window.mermaid.initialize(mermaidConfig());
-      render();
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     function autoResize() {
       const ta = document.getElementById('input');
