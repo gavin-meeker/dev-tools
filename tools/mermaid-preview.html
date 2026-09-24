@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <title>Mermaid Diagrams - Dev Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Chivo+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .view-tabs {
+      display: inline-flex;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 0.9rem;
+    }
+
+    .view-tabs button {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0.4rem 1rem;
+      color: var(--color-text-light);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      border-right: 1px solid var(--color-border);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .view-tabs button:last-child { border-right: none; }
+
+    .view-tabs button:hover {
+      color: var(--color-text);
+      background: var(--color-surface);
+    }
+
+    .view-tabs button.active {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+
+    .tab-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-row .spacer { flex: 1; }
+
+    .tab-row select {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 0.35rem 0.5rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .tab-row .btn-quiet { margin-bottom: 0.9rem; }
+
+    .split-view {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.4rem;
+      margin-top: 1rem;
+    }
+
+    /* Prevent a wide diagram from forcing a grid track wider than 1fr */
+    .split-view > * { min-width: 0; }
+
+    .split-view.mode-compare .pane-input {
+      border-right: 1px solid var(--color-border-soft);
+      padding-right: 1.4rem;
+    }
+
+    .split-view.mode-preview,
+    .split-view.mode-text {
+      grid-template-columns: 1fr;
+    }
+
+    .split-view.mode-preview .pane-input,
+    .split-view.mode-text .pane-preview {
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      .split-view.mode-compare { grid-template-columns: 1fr; }
+      .split-view.mode-compare .pane-input { border-right: 0; border-bottom: 1px solid var(--color-border-soft); padding-right: 0; padding-bottom: 1.4rem; }
+      .view-tabs button { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+    }
+
+    .split-view textarea {
+      min-height: 480px;
+      margin-bottom: 0;
+      resize: vertical;
+      font-size: 0.85rem;
+    }
+
+    .split-view.mode-text textarea {
+      min-height: 60vh;
+      font-size: 0.95rem;
+    }
+
+    .pane-preview {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Fixed-height viewport: the diagram is moved by transform rather than by
+       scrolling, so wheel-zoom never fights the page scroll. */
+    .diagram-canvas {
+      position: relative;
+      background: var(--color-recess);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      min-height: 480px;
+      flex: 1;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .diagram-canvas.dragging { cursor: grabbing; }
+
+    .split-view.mode-preview .diagram-canvas { min-height: 70vh; }
+
+    .diagram-stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+
+    .diagram-stage svg { display: block; }
+
+    /* Dim the last good diagram while the current source is invalid */
+    .diagram-canvas.stale .diagram-stage { opacity: 0.35; }
+
+    .canvas-controls {
+      position: absolute;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      display: flex;
+      gap: 0.25rem;
+      z-index: 2;
+    }
+
+    .canvas-controls button {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-light);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      min-width: 1.9rem;
+      padding: 0.25rem 0.45rem;
+      cursor: pointer;
+    }
+
+    .canvas-controls button:hover {
+      color: var(--color-text);
+      border-color: var(--color-text-light);
+    }
+
+    .zoom-readout {
+      position: absolute;
+      left: 0.6rem;
+      bottom: 0.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-text-light);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .pane-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .pane-head .spacer { flex: 1; }
+
+    .pane-head .btn-quiet {
+      padding: 0.2rem 0.55rem;
+      font-size: 0.72rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .error-msg {
+      margin-top: 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back-link" href="../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+    <a class="site-title" href="../index.html">Dev Tools</a>
+    <span class="header-spacer"></span>
+    <a class="rail-link" href="https://github.com/gavin-meeker/dev-tools" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme"></button>
+  </header>
+
+  <main class="wide">
+    <div class="page-title-bar">
+      <h1>Mermaid diagrams</h1>
+      <span class="page-note">render mermaid source, zoom it, export it</span>
+      <button class="btn-clear" onclick="saveToHash()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+    </div>
+    <div class="tool-container">
+      <div class="tab-row">
+        <div class="view-tabs" role="tablist" aria-label="View mode">
+          <button type="button" data-view="compare" onclick="setView('compare')">Compare</button>
+          <button type="button" data-view="preview" onclick="setView('preview')">Diagram</button>
+          <button type="button" data-view="text" onclick="setView('text')">Source</button>
+        </div>
+        <span class="spacer"></span>
+        <select id="sample" aria-label="Insert a starter diagram" onchange="insertSample(this.value)">
+          <option value="">Starter diagram…</option>
+          <option value="flowchart">Flowchart</option>
+          <option value="sequence">Sequence</option>
+          <option value="class">Class</option>
+          <option value="state">State</option>
+          <option value="er">Entity relationship</option>
+          <option value="gantt">Gantt</option>
+          <option value="pie">Pie</option>
+        </select>
+      </div>
+      <div class="split-view mode-compare" id="split-view">
+        <div class="pane-input">
+          <label for="input">Mermaid source</label>
+          <div class="input-wrap">
+            <textarea id="input" spellcheck="false" oninput="scheduleRender()" placeholder="flowchart LR
+  A[Start] --> B{Choice}"></textarea>
+            <button class="clear-icon" onclick="clearTool()" title="Clear"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          <div class="error-msg" id="error"></div>
+        </div>
+        <div class="pane-preview">
+          <div class="pane-head">
+            <label>Diagram</label>
+            <span class="spacer"></span>
+            <button class="btn-quiet" onclick="downloadSvg()">SVG</button>
+            <button class="btn-quiet" onclick="downloadPng()">PNG</button>
+          </div>
+          <div class="diagram-canvas" id="canvas">
+            <div class="diagram-stage" id="stage"></div>
+            <span class="zoom-readout" id="zoom-readout"></span>
+            <div class="canvas-controls">
+              <button type="button" onclick="zoomBy(1 / 1.25)" title="Zoom out">&minus;</button>
+              <button type="button" onclick="fitToCanvas()" title="Fit to view">Fit</button>
+              <button type="button" onclick="zoomBy(1.25)" title="Zoom in">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Made by Gavin Meeker</span>
+    <span id="share-timestamp"></span>
+  </footer>
+
+  <script>
+    var VIEW_STORAGE_KEY = 'devtools:mermaid-view';
+
+    var SAMPLES = {
+      flowchart: `flowchart LR
+  A[Request] --> B{Cached?}
+  B -- yes --> C[Serve from cache]
+  B -- no --> D[Query database]
+  D --> E[Write cache]
+  E --> C`,
+      sequence: `sequenceDiagram
+  participant U as User
+  participant A as API
+  participant D as Database
+  U->>A: POST /orders
+  A->>D: insert order
+  D-->>A: order id
+  A-->>U: 201 Created`,
+      class: `classDiagram
+  class Order {
+    +String id
+    +Money total
+    +place()
+    +cancel()
+  }
+  class LineItem {
+    +String sku
+    +int quantity
+  }
+  Order "1" --> "*" LineItem`,
+      state: `stateDiagram-v2
+  [*] --> Draft
+  Draft --> Review: submit
+  Review --> Draft: changes requested
+  Review --> Published: approve
+  Published --> [*]`,
+      er: `erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : contains
+  PRODUCT ||--o{ LINE_ITEM : "appears in"`,
+      gantt: `gantt
+  title Release plan
+  dateFormat YYYY-MM-DD
+  section Build
+    API           :a1, 2026-01-05, 12d
+    Web client    :after a1, 10d
+  section Ship
+    Beta          :2026-02-02, 7d
+    GA            :milestone, 2026-02-16, 0d`,
+      pie: `pie title Time spent
+  "Writing code" : 45
+  "Reviewing" : 25
+  "Meetings" : 20
+  "Waiting on CI" : 10`
+    };
+
+    function setView(mode) {
+      var sv = document.getElementById('split-view');
+      sv.classList.remove('mode-compare', 'mode-preview', 'mode-text');
+      sv.classList.add('mode-' + mode);
+      document.querySelectorAll('.view-tabs button').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.view === mode);
+      });
+      try { localStorage.setItem(VIEW_STORAGE_KEY, mode); } catch (e) {}
+      if (mode !== 'text') fitToCanvas();
+    }
+
+    function insertSample(key) {
+      document.getElementById('sample').value = '';
+      if (!SAMPLES[key]) return;
+      var ta = document.getElementById('input');
+      ta.value = SAMPLES[key];
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      scheduleRender(true);
+    }
+
+    // ---- Render ----
+
+    var _renderTimer = null;
+    var _renderSeq = 0;
+
+    function scheduleRender(immediate) {
+      if (_renderTimer) clearTimeout(_renderTimer);
+      if (immediate) { render(); return; }
+      _renderTimer = setTimeout(render, 250);
+    }
+
+    function showError(message) {
+      document.getElementById('error').textContent = message || '';
+      document.getElementById('canvas').classList.toggle('stale', !!message);
+    }
+
+    function render() {
+      if (!window.mermaid) return;
+      var src = document.getElementById('input').value.trim();
+      var stage = document.getElementById('stage');
+      if (!src) {
+        stage.innerHTML = '';
+        showError('');
+        updateZoomReadout();
+        return;
+      }
+      var id = 'mmd-' + (++_renderSeq);
+      var seq = _renderSeq;
+      window.mermaid.render(id, src).then(function(result) {
+        // A newer keystroke already kicked off a render; drop this stale result
+        if (seq !== _renderSeq) return;
+        stage.innerHTML = result.svg;
+        normalizeSvg(stage.querySelector('svg'));
+        showError('');
+        fitToCanvas();
+      }).catch(function(e) {
+        if (seq !== _renderSeq) return;
+        // mermaid.render leaves its offscreen work element behind when parsing fails
+        var orphan = document.getElementById('d' + id) || document.getElementById(id);
+        if (orphan) orphan.remove();
+        showError((e && e.message ? e.message : String(e)).trim());
+      });
+    }
+
+    // Mermaid sizes its SVG with a percentage width and a max-width style, which
+    // makes the element's box depend on its parent. The stage is absolutely
+    // positioned and scaled, so pin the SVG to its intrinsic viewBox size instead.
+    function normalizeSvg(svg) {
+      if (!svg) return;
+      var box = svg.viewBox && svg.viewBox.baseVal;
+      var w = box && box.width ? box.width : svg.getBoundingClientRect().width;
+      var h = box && box.height ? box.height : svg.getBoundingClientRect().height;
+      svg.removeAttribute('width');
+      svg.removeAttribute('height');
+      svg.style.maxWidth = 'none';
+      svg.style.width = w + 'px';
+      svg.style.height = h + 'px';
+    }
+
+    // ---- Zoom and pan ----
+
+    var _view = { x: 0, y: 0, k: 1 };
+    var MIN_SCALE = 0.1;
+    var MAX_SCALE = 8;
+
+    function applyView() {
+      var stage = document.getElementById('stage');
+      stage.style.transform = 'translate(' + _view.x + 'px,' + _view.y + 'px) scale(' + _view.k + ')';
+      updateZoomReadout();
+    }
+
+    function updateZoomReadout() {
+      var el = document.getElementById('zoom-readout');
+      el.textContent = document.getElementById('stage').querySelector('svg')
+        ? Math.round(_view.k * 100) + '%'
+        : '';
+    }
+
+    function svgSize() {
+      var svg = document.getElementById('stage').querySelector('svg');
+      if (!svg) return null;
+      return { w: parseFloat(svg.style.width), h: parseFloat(svg.style.height) };
+    }
+
+    // Centre the diagram and scale it down to fit; never scale small diagrams up.
+    function fitToCanvas() {
+      var size = svgSize();
+      if (!size || !size.w || !size.h) { applyView(); return; }
+      var canvas = document.getElementById('canvas').getBoundingClientRect();
+      var pad = 24;
+      var k = Math.min(1, (canvas.width - pad * 2) / size.w, (canvas.height - pad * 2) / size.h);
+      k = Math.max(MIN_SCALE, k);
+      _view.k = k;
+      _view.x = (canvas.width - size.w * k) / 2;
+      _view.y = (canvas.height - size.h * k) / 2;
+      applyView();
+    }
+
+    function zoomAt(factor, cx, cy) {
+      var k = Math.min(MAX_SCALE, Math.max(MIN_SCALE, _view.k * factor));
+      var ratio = k / _view.k;
+      // Keep the point under (cx, cy) fixed while the scale changes
+      _view.x = cx - (cx - _view.x) * ratio;
+      _view.y = cy - (cy - _view.y) * ratio;
+      _view.k = k;
+      applyView();
+    }
+
+    function zoomBy(factor) {
+      var rect = document.getElementById('canvas').getBoundingClientRect();
+      zoomAt(factor, rect.width / 2, rect.height / 2);
+    }
+
+    (function bindCanvas() {
+      var canvas = document.getElementById('canvas');
+      var drag = null;
+
+      canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var rect = canvas.getBoundingClientRect();
+        // Trackpad pinch arrives as a wheel event with ctrlKey set; both paths zoom
+        var factor = Math.pow(0.999, e.deltaY * (e.ctrlKey ? 2 : 1));
+        zoomAt(factor, e.clientX - rect.left, e.clientY - rect.top);
+      }, { passive: false });
+
+      canvas.addEventListener('pointerdown', function(e) {
+        if (e.button !== 0) return;
+        drag = { id: e.pointerId, x: e.clientX - _view.x, y: e.clientY - _view.y };
+        canvas.setPointerCapture(e.pointerId);
+        canvas.classList.add('dragging');
+      });
+
+      canvas.addEventListener('pointermove', function(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        _view.x = e.clientX - drag.x;
+        _view.y = e.clientY - drag.y;
+        applyView();
+      });
+
+      function endDrag(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        drag = null;
+        canvas.classList.remove('dragging');
+      }
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+
+      canvas.addEventListener('dblclick', function() { fitToCanvas(); });
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function() {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(fitToCanvas, 150);
+      });
+    })();
+
+    // ---- Export ----
+
+    function exportableSvg() {
+      var svg = document.getElementById('stage').querySelector('svg');
+      if (!svg) {
+        showToast('Nothing to export yet');
+        return null;
+      }
+      var clone = svg.cloneNode(true);
+      var size = svgSize();
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      clone.setAttribute('width', size.w);
+      clone.setAttribute('height', size.h);
+      if (!clone.getAttribute('viewBox')) {
+        clone.setAttribute('viewBox', '0 0 ' + size.w + ' ' + size.h);
+      }
+      // The page background shows through the site's transparent SVG, so paint
+      // the current surface colour into the export itself.
+      var bg = getComputedStyle(document.documentElement).getPropertyValue('--color-recess').trim();
+      var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('width', '100%');
+      rect.setAttribute('height', '100%');
+      rect.setAttribute('fill', bg);
+      clone.insertBefore(rect, clone.firstChild);
+      return { markup: new XMLSerializer().serializeToString(clone), width: size.w, height: size.h };
+    }
+
+    function triggerDownload(blob, filename) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(function() { URL.revokeObjectURL(url); }, 0);
+    }
+
+    function downloadSvg() {
+      var out = exportableSvg();
+      if (!out) return;
+      triggerDownload(new Blob([out.markup], { type: 'image/svg+xml' }), 'diagram.svg');
+      showToast('SVG downloaded');
+    }
+
+    function downloadPng() {
+      var out = exportableSvg();
+      if (!out) return;
+      var scale = 2;
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(out.width * scale));
+        canvas.height = Math.max(1, Math.round(out.height * scale));
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+          if (!blob) { showToast('PNG export failed'); return; }
+          triggerDownload(blob, 'diagram.png');
+          showToast('PNG downloaded');
+        }, 'image/png');
+      };
+      img.onerror = function() { showToast('PNG export failed'); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.markup);
+    }
+
+    // ---- Mermaid setup ----
+
+    function mermaidOptions() {
+      var sans = getComputedStyle(document.documentElement).getPropertyValue('--font-sans').trim();
+      return mermaidThemeConfig({
+        // Labels must be real <text>, not foreignObject HTML: browsers skip
+        // foreignObject content when an SVG is rasterized for the PNG export.
+        htmlLabels: false,
+        fontFamily: sans,
+        flowchart: { htmlLabels: false },
+        maxTextSize: 200000
+      });
+    }
+
+    // Called from the mermaid script's onload, which is after shared.js has
+    // defined mermaidThemeConfig/onThemeChange.
+    function initMermaid() {
+      window.mermaid.initialize(mermaidOptions());
+      render();
+      onThemeChange(function() {
+        window.mermaid.initialize(mermaidOptions());
+        scheduleRender(true);
+      });
+    }
+
+    // Seed a sample only on a first visit — a share hash or autosaved source
+    // restores asynchronously and would otherwise overwrite it.
+    (function() {
+      var hasHash = location.hash && location.hash.length > 1;
+      var hasAutosave = localStorage.getItem('devtools:' + location.pathname + ':input') !== null;
+      if (hasHash || hasAutosave) return;
+      document.getElementById('input').value = SAMPLES.flowchart;
+    })();
+  </script>
+  <script src="../shared.js"></script>
+  <script src="../autosave.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"
+          integrity="sha384-o+g/BxPwhi0C3RK7oQBxQuNimeafQ3GE/ST4iT2BxVI4Wzt60SH4pq9iXVYujjaS"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"
+          onload="initMermaid()"></script>
+  <script>
+    (function initView() {
+      var saved = null;
+      try { saved = localStorage.getItem(VIEW_STORAGE_KEY); } catch (e) {}
+      var defaultView = window.innerWidth <= 700 ? 'preview' : 'compare';
+      setView(saved || defaultView);
+    })();
+    loadFromHash();
+  </script>
+</body>
+</html>
